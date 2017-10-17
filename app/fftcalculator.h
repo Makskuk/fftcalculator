@@ -27,9 +27,9 @@ public:
     DataVector getAvgSpectrumCounts() const {return m_avgSpectrumCounts; }
 
 signals:
-    void calculatedWindow(int count);
-    void calculatedLastWindow();
-    void noMoreData();
+    void calculatedWindow(int count); // по готовности очередного окна
+    void calculatedLastWindow(); // по готовности последнего окна
+    void noMoreData(); // после последнего усреднения
 
 public slots:
     /**
@@ -60,6 +60,7 @@ protected:
     DataVector m_avgSpectrumCounts;
     int m_lengthToAvg;
     int m_calculatedWindowsCount;
+    bool m_lastWindow;
 };
 
 #endif // FFTCALCULATOR_H

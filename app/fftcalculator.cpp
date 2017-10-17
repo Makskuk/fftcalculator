@@ -3,7 +3,8 @@
 FftCalculator::FftCalculator(QObject *parent) : QObject(parent),
     m_fft(new FFTRealWrapper),
     m_lengthToAvg(10),
-    m_calculatedWindowsCount(0)
+    m_calculatedWindowsCount(0),
+    m_lastWindow(false)
 {
     connect(this, &FftCalculator::calculatedWindow, this, &FftCalculator::onWindowCalculated);
     connect(this, &FftCalculator::calculatedLastWindow, this, &FftCalculator::calcAvgSpectrumCounts);
@@ -21,10 +22,12 @@ void FftCalculator::calculateOneWindow(FftCalculator::DataVector inputVector, bo
     m_calculatedWindowsCount++;
 
     //сигнал о готовности следующего окна
-    if (!lastWindow)
+    if (!lastWindow) {
         emit calculatedWindow(m_calculatedWindowsCount);
-    else
+    } else {
         emit calculatedLastWindow();
+        m_lastWindow = true;
+    }
 }
 
 void FftCalculator::calcAvgSpectrumCounts()
@@ -57,6 +60,9 @@ void FftCalculator::calcAvgSpectrumCounts()
 
     // дописывам результаты в выходной усредненный вектор
     m_avgSpectrumCounts += outputVector;
+
+    if (m_lastWindow)
+        emit noMoreData();
 }
 
 void FftCalculator::onWindowCalculated(int count)
