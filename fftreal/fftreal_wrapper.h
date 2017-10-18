@@ -21,6 +21,7 @@
 #define FFTREAL_WRAPPER_H
 
 #include <QtCore/QtGlobal>
+#include "math.h"
 
 #if defined(FFTREAL_LIBRARY)
 #  define FFTREAL_EXPORT Q_DECL_EXPORT
@@ -53,8 +54,8 @@ public:
     ~FFTRealWrapper();
 
     typedef float DataType;
-    void calculateFFT(DataType in[], const DataType out[]);
-    int windowLength() const {return 2 ^ FFTLengthPowerOfTwo;}
+    void calculateFFT(const DataType in[], DataType out[]);
+    int windowLength() const {return pow(2, FFTLengthPowerOfTwo);}
 
 private:
     FFTRealWrapperPrivate*  m_private;

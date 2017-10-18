@@ -11,6 +11,7 @@ class FftCalculator : public QObject
     Q_OBJECT
 public:
     explicit FftCalculator(QObject *parent = 0);
+    ~FftCalculator();
 
     typedef QVector<FFTRealWrapper::DataType>   DataVector;
 

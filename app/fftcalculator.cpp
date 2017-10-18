@@ -10,9 +10,14 @@ FftCalculator::FftCalculator(QObject *parent) : QObject(parent),
     connect(this, &FftCalculator::calculatedLastWindow, this, &FftCalculator::calcAvgSpectrumCounts);
 }
 
+FftCalculator::~FftCalculator()
+{
+    delete m_fft;
+}
+
 void FftCalculator::calculateOneWindow(FftCalculator::DataVector inputVector, bool lastWindow)
 {
-    FftCalculator::DataVector outputVector;
+    FftCalculator::DataVector outputVector(1024);
 
     //рассчет БПФ
     m_fft->calculateFFT(inputVector.data(), outputVector.data());
@@ -25,14 +30,15 @@ void FftCalculator::calculateOneWindow(FftCalculator::DataVector inputVector, bo
     if (!lastWindow) {
         emit calculatedWindow(m_calculatedWindowsCount);
     } else {
-        emit calculatedLastWindow();
         m_lastWindow = true;
+        emit calculatedLastWindow();
     }
 }
 
 void FftCalculator::calcAvgSpectrumCounts()
 {
     FftCalculator::DataVector outputVector;
+    FftCalculator::DataVector inputVector;
     int i, j, count;
 
     // берем первый массив данных (и удаляем его из аккумулятора)
@@ -41,11 +47,10 @@ void FftCalculator::calcAvgSpectrumCounts()
     for(i=0; i<m_lengthToAvg-1; i++) {
         // суммируем элементы выходного массива с элементами первого массива в аккумуляторе
         if(!m_accumulator.isEmpty()) {
+            inputVector = m_accumulator.takeFirst();
             for(j=0; j<m_fft->windowLength(); j++) {
-                outputVector[j] += m_accumulator.first()[j];
+                outputVector[j] += inputVector[j];
             }
-            // удаляем прибавленный массив из аккумулятора
-            m_accumulator.removeFirst();
         } else {
             break;
         }

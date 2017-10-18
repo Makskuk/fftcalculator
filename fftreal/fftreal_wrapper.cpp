@@ -48,7 +48,7 @@ FFTRealWrapper::~FFTRealWrapper()
     delete m_private;
 }
 
-void FFTRealWrapper::calculateFFT(DataType in[], const DataType out[])
+void FFTRealWrapper::calculateFFT(const DataType in[], DataType out[])
 {
-    m_private->m_fft.do_fft(in, out);
+    m_private->m_fft.do_fft(out, in);
 }

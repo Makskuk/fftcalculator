@@ -10,10 +10,12 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    fftcalculator.cpp
+    fftcalculator.cpp \
+    filereader.cpp
 
 HEADERS += \
-    fftcalculator.h
+    fftcalculator.h \
+    filereader.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
