@@ -11,11 +11,13 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     fftcalculator.cpp \
-    filereader.cpp
+    filereader.cpp \
+    filewriter.cpp
 
 HEADERS += \
     fftcalculator.h \
-    filereader.h
+    filereader.h \
+    filewriter.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings

@@ -56,7 +56,7 @@ void FileReader::readDataSet()
 
 void FileReader::onFftFinished()
 {
-    qDebug()<<"Close file";
+    qDebug()<<"Close input file";
     m_file->close();
     emit done(true);
 }
