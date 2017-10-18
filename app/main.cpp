@@ -13,13 +13,14 @@ int main(int argc, char *argv[])
 
     QObject::connect(&freader, &FileReader::done, [&](bool success){
         if (!success) {
-            a.exit(-1);
+            emit fwriter.done();
             return;
         }
 
         qDebug("All done. Write result to file %s", qPrintable(fwriter.fileName()));
         QVector<float> data = freader.getFftResult();
         fwriter.writeVector(data);
+        qDebug("Write complete.");
     });
 
     freader.readFile();
