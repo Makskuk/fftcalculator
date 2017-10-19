@@ -2,19 +2,22 @@
 #include "filereader.h"
 #include "filewriter.h"
 
+#include <QDebug>
+
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+//    QCoreApplication a(argc, argv);
 
-    FileReader freader("sample.txt");
+    FileReader freader("/home/work/QtCreator_projects/fftcalculator/sine_1kHz.wav");
     FileWriter fwriter("fft_out.txt");
 
-    QObject::connect(&fwriter, &FileWriter::done, &a, &QCoreApplication::quit, Qt::QueuedConnection);
+//    QObject::connect(&fwriter, &FileWriter::done, &a, &QCoreApplication::quit, Qt::QueuedConnection);
 
     QObject::connect(&freader, &FileReader::done, [&](bool success){
         if (!success) {
-            emit fwriter.done();
-            return;
+//            emit fwriter.done();
+//            return;
+            exit(-1);
         }
 
         qDebug("All done. Write result to file %s", qPrintable(fwriter.fileName()));
@@ -25,5 +28,6 @@ int main(int argc, char *argv[])
 
     freader.readFile();
 
-    return a.exec();
+//    return a.exec();
+    return 0;
 }

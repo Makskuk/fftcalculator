@@ -38,7 +38,7 @@ public slots:
      * @param inputVector
      * Вычисляет БПФ для одной порции данных - длины окна БПФ
      */
-    void calculateOneWindow(DataVector inputVector, bool lastWindow=false);
+    void calculateOneWindow(DataVector *inputVector, bool lastWindow=false);
 
 protected slots:
     /**

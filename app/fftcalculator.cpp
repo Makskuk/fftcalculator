@@ -15,12 +15,12 @@ FftCalculator::~FftCalculator()
     delete m_fft;
 }
 
-void FftCalculator::calculateOneWindow(FftCalculator::DataVector inputVector, bool lastWindow)
+void FftCalculator::calculateOneWindow(FftCalculator::DataVector *inputVector, bool lastWindow)
 {
     FftCalculator::DataVector outputVector(1024);
 
     //рассчет БПФ
-    m_fft->calculateFFT(inputVector.data(), outputVector.data());
+    m_fft->calculateFFT(inputVector->data(), outputVector.data());
 
     //накопление результатов в аккумуляторе
     m_accumulator.push_back(outputVector);
@@ -37,34 +37,43 @@ void FftCalculator::calculateOneWindow(FftCalculator::DataVector inputVector, bo
 
 void FftCalculator::calcAvgSpectrumCounts()
 {
-    FftCalculator::DataVector outputVector;
-    FftCalculator::DataVector inputVector;
-    int i, j, count;
+//    FftCalculator::DataVector outputVector;
+//    FftCalculator::DataVector inputVector;
+//    int i, j, count;
 
-    // берем первый массив данных (и удаляем его из аккумулятора)
-    outputVector = m_accumulator.takeFirst();
+//    // берем первый массив данных (и удаляем его из аккумулятора)
+//    outputVector = m_accumulator.takeFirst();
 
-    for(i=0; i<m_lengthToAvg-1; i++) {
-        // суммируем элементы выходного массива с элементами первого массива в аккумуляторе
+//    for(i=0; i<m_lengthToAvg-1; i++) {
+//        // суммируем элементы выходного массива с элементами первого массива в аккумуляторе
+//        if(!m_accumulator.isEmpty()) {
+//            inputVector = m_accumulator.takeFirst();
+//            for(j=0; j<m_fft->windowLength(); j++) {
+//                outputVector[j] += inputVector[j];
+//            }
+//        } else {
+//            break;
+//        }
+//    }
+
+//    count = i+1; // количество слагаемых (векторов, извлеченных из аккумулятора)
+//                // их может быть меньше, чем m_lengthToAvg при обработке последнего окна
+
+//    for(j=0; j<m_fft->windowLength(); j++) {
+//        outputVector[j] /= count;
+//    }
+
+//    // дописывам результаты в выходной усредненный вектор
+//    m_avgSpectrumCounts += outputVector;
+
+    // просто записываем выход БПФ
+    for(int i=0; i<m_lengthToAvg; i++) {
         if(!m_accumulator.isEmpty()) {
-            inputVector = m_accumulator.takeFirst();
-            for(j=0; j<m_fft->windowLength(); j++) {
-                outputVector[j] += inputVector[j];
-            }
+            m_avgSpectrumCounts += m_accumulator.takeFirst();
         } else {
             break;
         }
     }
-
-    count = i+1; // количество слагаемых (векторов, извлеченных из аккумулятора)
-                // их может быть меньше, чем m_lengthToAvg при обработке последнего окна
-
-    for(j=0; j<m_fft->windowLength(); j++) {
-        outputVector[j] /= count;
-    }
-
-    // дописывам результаты в выходной усредненный вектор
-    m_avgSpectrumCounts += outputVector;
 
     if (m_lastWindow)
         emit noMoreData();
