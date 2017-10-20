@@ -19,11 +19,12 @@ typedef struct _Argument {
 
 static void printHelp(QString programName)
 {
-    qInfo() << "Read WAV file, calculate FFT and write results to text file\n"
-            << "Usage:" << qPrintable(programName) << "-i file [-o path]\n"
+    QTextStream stdOutStream(stdout);
+    stdOutStream << "Read WAV file, calculate FFT and write results to text file\n"
+            << "Usage: " << qPrintable(programName) << " -i file [-o path]\n"
             << "  -i   input WAV file\n"
             << "  -o   path to directory for output text files. One file for one input channel\n"
-            << "       By default - current directory";
+            << "       By default - current directory\n";
 }
 
 static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
@@ -34,7 +35,7 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
     for (int i=1; i < argc; i++) {
         arg = QString(argv[i]);
         if (arg == "-h" || arg == "--help") {
-            Argument a = {HELP, QString(argv[0])};
+            Argument a = {HELP, progName};
             result.clear();
             result.append(a);
             return 0;
@@ -62,7 +63,7 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
 
 int main(int argc, char *argv[])
 {
-//    QCoreApplication a(argc, argv);
+    QCoreApplication a(argc, argv);
     QList<Argument> arguments;
     QList<Argument>::iterator  argIterator;
     QFileInfo inputFileInfo, programName;
@@ -114,23 +115,23 @@ int main(int argc, char *argv[])
     FileReader freader(inputFileInfo.absoluteFilePath());
     FileWriter fwriter(outputPath.absolutePath());
 
-//    QObject::connect(&fwriter, &FileWriter::done, &a, &QCoreApplication::quit, Qt::QueuedConnection);
+    QObject::connect(&fwriter, &FileWriter::done, &a, &QCoreApplication::quit, Qt::QueuedConnection);
 
     QObject::connect(&freader, &FileReader::done, [&](bool success){
         if (!success) {
-//            emit fwriter.done();
-//            return;
-            exit(-1);
+            emit fwriter.done();
+            return;
+//            exit(-1);
         }
 
 //        qDebug("All done. Write result to file %s", qPrintable(fwriter.fileName()));
 //        QVector<float> data = freader.getFftResult();
 //        fwriter.writeVector(data);
-        qDebug("Write complete.");
+//        qDebug("Write complete.");
+        emit fwriter.done();
     });
 
     freader.readFile();
 
-//    return a.exec();
-    return 0;
+    return a.exec();
 }
