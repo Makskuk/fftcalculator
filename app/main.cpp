@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <QFileInfo>
+#include <QDir>
 #include "filereader.h"
 #include "filewriter.h"
 
@@ -33,8 +34,10 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
     for (int i=1; i < argc; i++) {
         arg = QString(argv[i]);
         if (arg == "-h" || arg == "--help") {
-            printHelp(progName);
-            return 1;
+            Argument a = {HELP, QString(argv[0])};
+            result.clear();
+            result.append(a);
+            return 0;
         }
         if (arg == "-i") {
             Argument a = {INPUT_FILE, QString(argv[++i])};
@@ -61,18 +64,55 @@ int main(int argc, char *argv[])
 {
 //    QCoreApplication a(argc, argv);
     QList<Argument> arguments;
+    QList<Argument>::iterator  argIterator;
+    QFileInfo inputFileInfo, programName;
+    QDir outputPath;
+
     int retval = parseCommandLine(argc, argv, arguments);
     if (retval != 0)
         return retval;
 
-    for(int i=0; i<arguments.count(); i++) {
-        qDebug() << arguments[i].key << arguments[i].value;
+    argIterator = arguments.begin();
+    while (argIterator != arguments.end()) {
+        switch (argIterator->key) {
+        case INPUT_FILE:
+            inputFileInfo.setFile(argIterator->value);
+            if (!inputFileInfo.exists()) {
+                qWarning() << "File" << inputFileInfo.fileName() << "does not exist";
+                return -1;
+            }
+            break;
+        case OUTPUT_PATH:
+            outputPath.setPath(argIterator->value);
+            if (!outputPath.exists()) {
+                qWarning() << "Directory" << outputPath.path() << "does not exist";
+                return -1;
+            }
+            break;
+        case HELP:
+            printHelp(argIterator->value);
+            return 0;
+        default:
+            qWarning() << "Unexpected argument: " << argIterator->value;
+        }
+        argIterator++;
     }
 
-    return 0;
+    if (inputFileInfo.fileName().isEmpty()) {
+        qWarning() << "Input file does not set.";
+        programName.setFile(QString(argv[0]));
+        printHelp(programName.fileName());
+        return -1;
+    }
 
-    FileReader freader("/home/work/QtCreator_projects/fftcalculator/sine_1kHz.wav");
-    FileWriter fwriter("fft_out.txt");
+    if (outputPath.absolutePath().isEmpty()) {
+        outputPath.setPath(QDir::currentPath());
+    }
+
+    qDebug() << "Save results to" << outputPath.absolutePath();
+
+    FileReader freader(inputFileInfo.absoluteFilePath());
+    FileWriter fwriter(outputPath.absolutePath());
 
 //    QObject::connect(&fwriter, &FileWriter::done, &a, &QCoreApplication::quit, Qt::QueuedConnection);
 
@@ -83,13 +123,13 @@ int main(int argc, char *argv[])
             exit(-1);
         }
 
-        qDebug("All done. Write result to file %s", qPrintable(fwriter.fileName()));
-        QVector<float> data = freader.getFftResult();
-        fwriter.writeVector(data);
+//        qDebug("All done. Write result to file %s", qPrintable(fwriter.fileName()));
+//        QVector<float> data = freader.getFftResult();
+//        fwriter.writeVector(data);
         qDebug("Write complete.");
     });
 
-//    freader.readFile();
+    freader.readFile();
 
 //    return a.exec();
     return 0;

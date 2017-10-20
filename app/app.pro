@@ -3,7 +3,7 @@ QT -= gui
 
 CONFIG += c++11
 
-TARGET = app
+TARGET = fftcalculator
 CONFIG += console
 CONFIG -= app_bundle
 
