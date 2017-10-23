@@ -12,14 +12,12 @@ TEMPLATE = app
 SOURCES += main.cpp \
     fftcalculator.cpp \
     filereader.cpp \
-    filewriter.cpp \
     wavfile.cpp \
     worker.cpp
 
 HEADERS += \
     fftcalculator.h \
     filereader.h \
-    filewriter.h \
     wavfile.h \
     worker.h
 
