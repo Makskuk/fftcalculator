@@ -34,8 +34,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 fftreal_dir = ../fftreal
 
-LIBS += -L$${fftreal_dir}
-LIBS += -lfftreal
+#LIBS += -L$${fftreal_dir}
+#LIBS += -lfftreal
+
+win32:CONFIG (release, debug|release): LIBS += -L$${fftreal_dir}/release -lfftreal
+else:win32:CONFIG (debug, debug|release): LIBS += -L$${fftreal_dir}/debug -lfftreal
+else:unix: LIBS += -L$${fftreal_dir} -lMyLibrary
 
 INCLUDEPATH += $${fftreal_dir}
 
