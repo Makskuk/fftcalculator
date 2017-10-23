@@ -73,10 +73,8 @@ void Worker::doFft()
 void Worker::writeResult(FftCalculator::DataVector *data)
 {
     if (!m_outputFile->isOpen()) {
-        qDebug("Worker %d set path to file %s", m_workerId, qPrintable(m_outputFileName));
         m_outputFileName.prepend(m_outputDir.absolutePath() + "/");
         m_outputFile->setFileName(m_outputFileName);
-        qDebug("Worker %d open file %s", m_workerId, qPrintable(m_outputFile->fileName()));
         m_outputFile->open(QIODevice::WriteOnly);
     }
 
