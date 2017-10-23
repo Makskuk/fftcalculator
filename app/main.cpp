@@ -2,7 +2,6 @@
 #include <QFileInfo>
 #include <QDir>
 #include "filereader.h"
-#include "filewriter.h"
 
 #include <QDebug>
 
@@ -64,9 +63,10 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+
     QList<Argument> arguments;
     QList<Argument>::iterator  argIterator;
-    QFileInfo inputFileInfo, programName;
+    QFileInfo inputFileInfo;
     QDir outputPath;
 
     int retval = parseCommandLine(argc, argv, arguments);
@@ -101,8 +101,7 @@ int main(int argc, char *argv[])
 
     if (inputFileInfo.fileName().isEmpty()) {
         qWarning() << "Input file does not set.";
-        programName.setFile(QString(argv[0]));
-        printHelp(programName.fileName());
+        printHelp(a.applicationName());
         return -1;
     }
 
@@ -113,22 +112,13 @@ int main(int argc, char *argv[])
     qDebug() << "Save results to" << outputPath.absolutePath();
 
     FileReader freader(inputFileInfo.absoluteFilePath());
-    FileWriter fwriter(outputPath.absolutePath());
-
-    QObject::connect(&fwriter, &FileWriter::done, &a, &QCoreApplication::quit, Qt::QueuedConnection);
+    freader.setOutputPath(outputPath.absolutePath());
 
     QObject::connect(&freader, &FileReader::done, [&](bool success){
-        if (!success) {
-            emit fwriter.done();
-            return;
-//            exit(-1);
-        }
-
-//        qDebug("All done. Write result to file %s", qPrintable(fwriter.fileName()));
-//        QVector<float> data = freader.getFftResult();
-//        fwriter.writeVector(data);
-//        qDebug("Write complete.");
-        emit fwriter.done();
+        if (success)
+            a.exit(0);
+        else
+            a.exit(-1);
     });
 
     freader.readFile();

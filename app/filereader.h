@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-#include "fftcalculator.h"
 #include "wavfile.h"
+#include "worker.h"
 
 /**
  * @brief The FileReader class
@@ -19,27 +19,28 @@ public:
     explicit FileReader(QString filename, QObject *parent = 0);
     ~FileReader();
 
-    FftCalculator::DataVector getFftResult() const;
-
 signals:
     void bufferRead(bool lastBuffer);
     void done(bool success);
+    void outputPathChanged(QString path);
 
 public slots:
+    void setOutputPath(QString absOutputPath);
     void printFileInfo();
     void readFile();
 
 protected slots:
     void readBuffer();
     void onBufferRead(bool lastBuffer);
-    void onFftFinished();
+    void onFftFinished(int workerId);
     qreal pcmToReal(qint16 pcm);
 
 protected:
-    WavFile *m_file;
-    FftCalculator *m_fftCalculator;
+    WavFile    *m_file;
     QByteArray *m_rawBuffer;
     QVector<FftCalculator::DataVector*> *m_inputChannelVector;
+    QList<Worker*> *m_workers;
+    QString    m_outputPath;
 
     int m_samplesCount;
     int m_channelsCount;

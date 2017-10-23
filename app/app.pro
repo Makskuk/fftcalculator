@@ -13,13 +13,15 @@ SOURCES += main.cpp \
     fftcalculator.cpp \
     filereader.cpp \
     filewriter.cpp \
-    wavfile.cpp
+    wavfile.cpp \
+    worker.cpp
 
 HEADERS += \
     fftcalculator.h \
     filereader.h \
     filewriter.h \
-    wavfile.h
+    wavfile.h \
+    worker.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
