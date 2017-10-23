@@ -25,7 +25,7 @@ public:
     DataVector getRawResults() const {return m_rawFFTResults; }
 
 signals:
-    void fftReady(DataVector *result); // по готовности преобразования
+    void fftReady(DataVector result); // по готовности преобразования
 
 public slots:
     /**

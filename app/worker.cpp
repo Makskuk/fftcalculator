@@ -9,10 +9,6 @@ Worker::Worker(int num, QObject *parent) : QObject(parent),
     m_workerId(num),
     m_busy(false)
 {
-    // moveToThread() cannot be called on a QObject with a parent
-    setParent(0);
-    moveToThread(m_thread);
-
     m_outputFileName.prepend(QString::number(m_workerId) + "_");
 
     connect(m_thread, &QThread::finished, this, &QObject::deleteLater);
@@ -20,6 +16,9 @@ Worker::Worker(int num, QObject *parent) : QObject(parent),
     connect(m_fftCalculator, &FftCalculator::fftReady, this, &Worker::writeResult);
     connect(this, &Worker::bufferChanged, this, &Worker::doFft);
 
+    // moveToThread() cannot be called on a QObject with a parent
+    setParent(0);
+    moveToThread(m_thread);
     m_thread->start();
 }
 
@@ -70,18 +69,24 @@ void Worker::doFft()
     m_fftCalculator->doFFT(m_buffer);
 }
 
-void Worker::writeResult(FftCalculator::DataVector *data)
+void Worker::writeResult(FftCalculator::DataVector data)
 {
     if (!m_outputFile->isOpen()) {
         m_outputFileName.prepend(m_outputDir.absolutePath() + "/");
         m_outputFile->setFileName(m_outputFileName);
-        m_outputFile->open(QIODevice::WriteOnly);
+        qDebug("Open file %s for channel %d", qPrintable(m_outputFileName), m_workerId);
+        m_outputFile->open(QIODevice::WriteOnly | QIODevice::Text);
     }
 
-    while (!data->isEmpty()) {
-        m_outputFile->write(QByteArray::number(data->takeFirst()).append("\r\n"));
+    QByteArray output;
+
+    while (!data.isEmpty()) {
+        output.append(QByteArray::number(data.takeFirst()).append("\r\n"));
     }
 
+    m_outputFile->write(output);
+
+    m_buffer = 0;
     m_busy = false;
 
     emit done(m_workerId);

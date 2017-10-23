@@ -31,7 +31,7 @@ public slots:
 
 protected slots:
     void doFft();
-    void writeResult(FftCalculator::DataVector *data);
+    void writeResult(FftCalculator::DataVector data);
 
 protected:
     QThread *m_thread;

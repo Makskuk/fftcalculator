@@ -2,7 +2,9 @@
 
 #include <QDebug>
 
-FileReader::FileReader(QString filename, QObject *parent) : QObject(parent)
+FileReader::FileReader(QString filename, QObject *parent) : QObject(parent),
+    m_lastBufferRead(false),
+    m_finishedWorkers(0)
 {
     m_file = new WavFile(this);
     m_workers = new QList<Worker*>();
@@ -21,6 +23,9 @@ FileReader::FileReader(QString filename, QObject *parent) : QObject(parent)
     m_readPos = m_file->headerLength(); // отступ на длину заголовка к секции данных
 
     connect(this, &FileReader::bufferRead, this, &FileReader::onBufferRead);
+    connect(this, &FileReader::done, []{
+        qInfo() << "Done!";
+    });
 }
 
 FileReader::~FileReader()
@@ -47,6 +52,7 @@ void FileReader::printFileInfo()
 
 void FileReader::readFile()
 {
+
     for (int i=0; i < m_channelsCount; i++) {
         m_inputChannelVector->append(new FftCalculator::DataVector(m_samplesCount));
 
@@ -104,22 +110,25 @@ void FileReader::readBuffer()
 
 void FileReader::onBufferRead(bool lastBuffer)
 {
+    m_lastBufferRead = lastBuffer;
     for (int i=0; i < m_channelsCount; i++) {
         m_workers->at(i)->setBuffer(m_inputChannelVector->at(i));
     }
 }
 
-int counter = 0;
-
 void FileReader::onFftFinished(int workerId)
 {
-//    qDebug()<<"Close input file";
-//    m_file->close();
-//    emit done(true);
-    qDebug() << "worker" << workerId << "finished!";
-    counter++;
-    if (counter == m_channelsCount)
-        emit done(true);
+    Q_UNUSED(workerId) // чтобы компилятор не ругался
+
+    // ждем, пока закончат все потоки и читаем новый буфер
+    m_finishedWorkers++;
+    if (m_finishedWorkers == m_channelsCount) {
+        m_finishedWorkers = 0;
+        if (!m_lastBufferRead)
+            readBuffer();
+        else
+            emit done(true);
+    }
 }
 
 const quint16 PCMS16MaxAmplitude =  32768; // because minimum is -32768

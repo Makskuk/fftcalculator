@@ -47,6 +47,8 @@ protected:
     int m_bytesPerSample;
     int m_sampleRate;
     int m_readPos;
+    bool m_lastBufferRead;
+    int m_finishedWorkers;
 };
 
 #endif // FILEREADER_H

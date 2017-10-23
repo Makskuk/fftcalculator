@@ -17,6 +17,6 @@ void FftCalculator::doFFT(FftCalculator::DataVector *inputVector)
     m_fft->calculateFFT(inputVector->data(), m_rawFFTResults.data());
 
     //сигнал о готовности
-    emit fftReady(&m_rawFFTResults);
+    emit fftReady(m_rawFFTResults);
 }
 
