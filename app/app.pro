@@ -39,7 +39,7 @@ fftreal_dir = ../fftreal
 
 win32:CONFIG (release, debug|release): LIBS += -L$${fftreal_dir}/release -lfftreal
 else:win32:CONFIG (debug, debug|release): LIBS += -L$${fftreal_dir}/debug -lfftreal
-else:unix: LIBS += -L$${fftreal_dir} -lMyLibrary
+else:unix: LIBS += -L$${fftreal_dir} -lfftreal
 
 INCLUDEPATH += $${fftreal_dir}
 
