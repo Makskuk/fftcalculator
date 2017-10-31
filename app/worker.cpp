@@ -3,9 +3,10 @@
 Worker::Worker(int num, QObject *parent) : QObject(parent),
     m_thread(new QThread()),
     m_fftCalculator(new FftCalculator(this)),
-    m_outputFile(new QFile()),
+    m_outputFile_real(new QFile()),
+    m_outputFile_imagine(new QFile()),
     m_outputDir(QDir::current()),
-    m_outputFileName("fft_out.txt"),
+    m_outputFileName("fft_out"),
     m_workerId(num),
     m_busy(false)
 {
@@ -24,9 +25,12 @@ Worker::Worker(int num, QObject *parent) : QObject(parent),
 
 Worker::~Worker()
 {
-    if (m_outputFile->isOpen())
-        m_outputFile->close();
-    delete m_outputFile;
+    if (m_outputFile_real->isOpen())
+        m_outputFile_real->close();
+    if (m_outputFile_imagine->isOpen())
+        m_outputFile_imagine->close();
+    delete m_outputFile_real;
+    delete m_outputFile_imagine;
 }
 
 void Worker::stop()
@@ -36,7 +40,8 @@ void Worker::stop()
         return;
     }
 
-    m_outputFile->close();
+    m_outputFile_real->close();
+    m_outputFile_imagine->close();
 
     m_thread->quit();
     m_thread->wait();
@@ -71,20 +76,35 @@ void Worker::doFft()
 
 void Worker::writeResult(FftCalculator::DataVector data)
 {
-    if (!m_outputFile->isOpen()) {
-        m_outputFileName.prepend(m_outputDir.absolutePath() + "/");
-        m_outputFile->setFileName(m_outputFileName);
-        qDebug("Open file %s for channel %d", qPrintable(m_outputFileName), m_workerId);
-        m_outputFile->open(QIODevice::WriteOnly | QIODevice::Text);
+    QString filename_real(m_outputFileName), filename_imagine(m_outputFileName);
+    if (!m_outputFile_real->isOpen()) {
+        filename_real.prepend(m_outputDir.absolutePath() + "/").append("_real.txt");
+        m_outputFile_real->setFileName(filename_real);
+        qDebug("Open file %s for channel %d", qPrintable(filename_real), m_workerId);
+        m_outputFile_real->open(QIODevice::WriteOnly | QIODevice::Text);
+    }
+    if (!m_outputFile_imagine->isOpen()) {
+        filename_imagine.prepend(m_outputDir.absolutePath() + "/").append("_imagine.txt");
+        m_outputFile_imagine->setFileName(filename_imagine);
+        qDebug("Open file %s for channel %d", qPrintable(filename_imagine), m_workerId);
+        m_outputFile_imagine->open(QIODevice::WriteOnly | QIODevice::Text);
     }
 
-    QByteArray output;
+    QByteArray output_r, output_i;
+    FftCalculator::DataVector::iterator iterator_r = data.begin();
+    FftCalculator::DataVector::reverse_iterator iterator_i = data.rbegin();
+    int i=0, count=FftCalculator::fftWindowLength()/2;
 
-    while (!data.isEmpty()) {
-        output.append(QByteArray::number(data.takeFirst()).append("\r\n"));
+    while (i < count) {
+        output_r.append(QByteArray::number(*iterator_r).append("\r\n"));
+        output_i.prepend(QByteArray::number(*iterator_i).append("\r\n"));
+        iterator_i++;
+        iterator_r++;
+        i++;
     }
 
-    m_outputFile->write(output);
+    m_outputFile_real->write(output_r);
+    m_outputFile_imagine->write(output_i);
 
     m_buffer = 0;
     m_busy = false;

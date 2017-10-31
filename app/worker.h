@@ -37,7 +37,8 @@ protected:
     QThread *m_thread;
     FftCalculator *m_fftCalculator;
     FftCalculator::DataVector *m_buffer;
-    QFile *m_outputFile;
+    QFile *m_outputFile_real;
+    QFile *m_outputFile_imagine;
     QDir m_outputDir;
     QString m_outputFileName;
     int m_workerId;
