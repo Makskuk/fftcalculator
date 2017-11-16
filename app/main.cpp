@@ -5,7 +5,6 @@
 #include "audiodevice.h"
 
 #include <QDebug>
-#include <QTextCodec>
 
 typedef enum _ArgType{
     INPUT_FILE,
@@ -75,7 +74,8 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
 #ifdef Q_OS_WIN32
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("IBM866"));
+//    QTextCodec::setCodecForLocale(QTextCodec::codecForName("IBM866"));
+    setlocale((LC_ALL, ".ACP");
 #endif
 
     QList<Argument> arguments;
