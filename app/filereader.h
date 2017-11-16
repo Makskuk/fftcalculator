@@ -2,9 +2,9 @@
 #define FILEREADER_H
 
 #include <QObject>
-#include <QFile>
 
-#include "fftcalculator.h"
+#include "wavfile.h"
+#include "worker.h"
 
 /**
  * @brief The FileReader class
@@ -17,25 +17,38 @@ class FileReader : public QObject
     Q_OBJECT
 public:
     explicit FileReader(QString filename, QObject *parent = 0);
-
-    FftCalculator::DataVector getFftResult() const;
+    ~FileReader();
 
 signals:
-    void fftWindowRead(FftCalculator::DataVector vector, bool lastWindow);
+    void bufferRead(bool lastBuffer);
     void done(bool success);
+    void outputPathChanged(QString path);
 
 public slots:
+    void setOutputPath(QString absOutputPath);
+    void printFileInfo();
     void readFile();
 
 protected slots:
-    void readDataSet();
-    void onFftFinished();
+    void readBuffer();
+    void onBufferRead(bool lastBuffer);
+    void onFftFinished(int workerId);
+    qreal pcmToReal(qint16 pcm);
 
 protected:
-    QFile *m_file;
-    FftCalculator *m_fftCalculator;
+    WavFile    *m_file;
+    QByteArray *m_rawBuffer;
+    QVector<FftCalculator::DataVector*> *m_inputChannelVector;
+    QList<Worker*> *m_workers;
+    QString    m_outputPath;
 
     int m_samplesCount;
+    int m_channelsCount;
+    int m_bytesPerSample;
+    int m_sampleRate;
+    int m_readPos;
+    bool m_lastBufferRead;
+    int m_finishedWorkers;
 };
 
 #endif // FILEREADER_H

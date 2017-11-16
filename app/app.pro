@@ -1,9 +1,9 @@
-QT += core
+QT += core multimedia
 QT -= gui
 
 CONFIG += c++11
 
-TARGET = app
+TARGET = fftcalculator
 CONFIG += console
 CONFIG -= app_bundle
 
@@ -12,12 +12,16 @@ TEMPLATE = app
 SOURCES += main.cpp \
     fftcalculator.cpp \
     filereader.cpp \
-    filewriter.cpp
+    wavfile.cpp \
+    worker.cpp \
+    audiodevice.cpp
 
 HEADERS += \
     fftcalculator.h \
     filereader.h \
-    filewriter.h
+    wavfile.h \
+    worker.h \
+    audiodevice.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -32,8 +36,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 fftreal_dir = ../fftreal
 
-LIBS += -L$${fftreal_dir}
-LIBS += -lfftreal
+#LIBS += -L$${fftreal_dir}
+#LIBS += -lfftreal
+
+win32:CONFIG (release, debug|release): LIBS += -L$${fftreal_dir}/release -lfftreal
+else:win32:CONFIG (debug, debug|release): LIBS += -L$${fftreal_dir}/debug -lfftreal
+else:unix: LIBS += -L$${fftreal_dir} -lfftreal
 
 INCLUDEPATH += $${fftreal_dir}
 

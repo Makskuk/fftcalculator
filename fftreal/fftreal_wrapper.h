@@ -55,7 +55,8 @@ public:
 
     typedef float DataType;
     void calculateFFT(const DataType in[], DataType out[]);
-    int windowLength() const {return pow(2, FFTLengthPowerOfTwo);}
+
+    static int windowLength() {return pow(2, FFTLengthPowerOfTwo);}
 
 private:
     FFTRealWrapperPrivate*  m_private;
