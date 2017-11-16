@@ -74,8 +74,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
 
 #ifdef Q_OS_WIN32
-//    QTextCodec::setCodecForLocale(QTextCodec::codecForName("IBM866"));
-    setlocale((LC_ALL, ".ACP");
+    setlocale(LC_ALL, ".ACP");
 #endif
 
     QList<Argument> arguments;
