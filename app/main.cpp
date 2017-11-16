@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
             foreach (QString device, AudioDevice::enumerateDevices()) {
                 qDebug() << device;
             }
+            qDebug() << "\nDefault device: " << AudioDevice::defaultDevice();
             return 0;
         case HELP:
             printHelp(argIterator->value);

@@ -14,7 +14,10 @@ public:
     explicit AudioDevice(QObject *parent = 0);
     ~AudioDevice();
 
+    QAudioDeviceInfo currentAudioDeviceInfo() const;
+
     static QStringList enumerateDevices();
+    static QString     defaultDevice();
 
 signals:
 

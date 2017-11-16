@@ -15,6 +15,11 @@ AudioDevice::~AudioDevice()
     stop();
 }
 
+QAudioDeviceInfo AudioDevice::currentAudioDeviceInfo() const
+{
+    return m_audioDevInfo;
+}
+
 QStringList AudioDevice::enumerateDevices()
 {
     QStringList list;
@@ -22,6 +27,11 @@ QStringList AudioDevice::enumerateDevices()
         list << deviceInfo.deviceName();
     }
     return list;
+}
+
+QString AudioDevice::defaultDevice()
+{
+    return QAudioDeviceInfo::defaultInputDevice().deviceName();
 }
 
 void AudioDevice::setInputDevice(QString devName)
@@ -53,8 +63,12 @@ void AudioDevice::setInputDevice(QAudioDeviceInfo &device)
 void AudioDevice::start()
 {
     m_audioInput = new QAudioInput(m_audioDevInfo, m_audioFormat);
+    connect(m_audioInput, &QAudioInput::stateChanged, this, &AudioDevice::handleDeviceState);
+
     m_buffer.resize(1024);
-    m_inputDevice = m_audioInput->start();
+    m_inputDevice = m_audioInput->start();    
+    connect(m_inputDevice, &QIODevice::readyRead, this, &AudioDevice::audioDataReady);
+
     m_isActive = true;
 }
 
