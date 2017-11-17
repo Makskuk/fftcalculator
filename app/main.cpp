@@ -5,6 +5,7 @@
 #include "audiodevice.h"
 
 #include <QDebug>
+#include <QTimer>
 
 typedef enum _ArgType{
     INPUT_FILE,
@@ -21,8 +22,10 @@ typedef struct _Argument {
 static void printHelp(QString programName)
 {
     QTextStream stdOutStream(stdout);
-    stdOutStream << "Read WAV file, calculate FFT and write results to text file\n"
-            << "Usage: " << qPrintable(programName) << " -i file [-o path] [-l] \n"
+    stdOutStream << "Calculate FFT and write results to text file.\n"
+                 << "If -i argument provided - read data from WAV file.\n"
+                 << "If -i NOT provided - read data from default audio input device. To stop reading - pyte Ctrl+c\n"
+            << "Usage: " << qPrintable(programName) << " [-i file] [-o path] [-l] \n"
             << "  -i   input WAV file\n"
             << "  -o   path to directory for output text files. One file for one input channel\n"
             << "       By default - current directory\n"
@@ -58,12 +61,6 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
             result.append(a);
             continue;
         }
-    }
-
-    if (result.isEmpty()) {
-        qWarning() << "No arguments set!";
-        printHelp(progName);
-        return -1;
     }
 
     return 0;
@@ -119,29 +116,40 @@ int main(int argc, char *argv[])
         argIterator++;
     }
 
-    if (inputFileInfo.fileName().isEmpty()) {
-        qWarning() << "Input file does not set.";
-        printHelp(a.applicationName());
-        return -1;
-    }
-
     if (outputPath.absolutePath().isEmpty()) {
         outputPath.setPath(QDir::currentPath());
     }
 
     qDebug() << "Save results to" << outputPath.absolutePath();
 
-    FileReader freader(inputFileInfo.absoluteFilePath());
-    freader.setOutputPath(outputPath.absolutePath());
+    FileReader*  freader;
+    AudioDevice* audioDevice;
 
-    QObject::connect(&freader, &FileReader::done, [&](bool success){
-        if (success)
-            a.exit(0);
-        else
-            a.exit(-1);
-    });
+    // Если задан входной файл - читаем его. Иначе - пытаемся читать из микрофона
+    if (!inputFileInfo.fileName().isEmpty()) {
+        freader = new FileReader(inputFileInfo.absoluteFilePath(), &a);
+        freader->setOutputPath(outputPath.absolutePath());
 
-    freader.readFile();
+        QObject::connect(freader, &FileReader::done, [&](bool success){
+            if (success)
+                a.exit(0);
+            else
+                a.exit(-1);
+        });
+
+        freader->readFile();
+    }
+    else {
+        audioDevice = new AudioDevice(&a);
+
+        qDebug() << "Read from input device " << audioDevice->currentAudioDeviceInfo().deviceName();
+        audioDevice->start();
+
+        QTimer::singleShot(5000, &a, [&]{
+            audioDevice->stop();
+            a.quit();
+        });
+    }
 
     return a.exec();
 }
