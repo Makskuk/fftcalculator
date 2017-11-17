@@ -17,14 +17,6 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
      * Их нужно взять либо из заголовка WAV-файла, либо из параметров входного устройства.
      */
     connect(this, &BaseDataReader::bufferRead, this, &BaseDataReader::onBufferRead);
-
-    // уничтожить процессы-воркеры по завершении обработки
-//    connect(this, &BaseDataReader::bufferProcessed, [&]{
-//        for (int i=0; i < m_channelsCount; i++) {
-//            m_workers->at(i)->stop();
-//            delete m_inputChannelVector->at(i);
-//        }
-//    });
 }
 
 BaseDataReader::~BaseDataReader()
