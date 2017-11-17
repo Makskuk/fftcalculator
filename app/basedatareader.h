@@ -11,11 +11,12 @@ public:
     explicit BaseDataReader(QObject *parent = 0);
     ~BaseDataReader();
 
+    bool init();
+
     int channelsCount()  const { return m_channelsCount; }
     int samplesCount()   const { return m_samplesCount; }
     int sampleRate()     const { return m_sampleRate; }
     int bytesPerSample() const { return m_bytesPerSample; }
-
 
 signals:
     void bufferRead();

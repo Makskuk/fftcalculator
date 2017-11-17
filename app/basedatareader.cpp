@@ -38,20 +38,11 @@ BaseDataReader::~BaseDataReader()
     delete m_workers;
 }
 
-void BaseDataReader::setOutputPath(QString absOutputPath)
-{
-    if (absOutputPath == m_outputPath)
-        return;
-
-    m_outputPath = absOutputPath;
-    emit outputPathChanged(m_outputPath);
-}
-
-void BaseDataReader::start()
+bool BaseDataReader::init()
 {
     if (!m_channelsCount) {
         emit error("Channels count not set!");
-        return;
+        return false;
     }
 
     // Создаем дочерние процессы-воркеры - по одному на канал
@@ -64,7 +55,22 @@ void BaseDataReader::start()
         connect(worker, &Worker::done, this, &BaseDataReader::onFftFinished);
     }
 
-    readBuffer();
+    return true;
+}
+
+void BaseDataReader::setOutputPath(QString absOutputPath)
+{
+    if (absOutputPath == m_outputPath)
+        return;
+
+    m_outputPath = absOutputPath;
+    emit outputPathChanged(m_outputPath);
+}
+
+void BaseDataReader::start()
+{
+    if (init())
+        readBuffer();
 }
 
 void BaseDataReader::stop()
