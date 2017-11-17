@@ -13,7 +13,7 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
      * m_sampleRate, m_bytesPerSample, m_channelsCount; а так же входное устройство m_dataInput.
      * Их нужно взять либо из заголовка WAV-файла, либо из параметров входного устройства.
      */
-    connect(this, &BaseDataReader::buffrRead, this, &BaseDataReader::onBufferRead);
+    connect(this, &BaseDataReader::bufferRead, this, &BaseDataReader::onBufferRead);
 }
 
 BaseDataReader::~BaseDataReader()
@@ -113,7 +113,7 @@ void BaseDataReader::readBuffer()
         m_lastBufferRead = m_dataInput->atEnd();
     }
 
-    emit buffrRead();
+    emit bufferRead();
 }
 
 void BaseDataReader::onBufferRead()

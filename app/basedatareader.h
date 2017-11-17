@@ -18,7 +18,7 @@ public:
 
 
 signals:
-    void buffrRead();
+    void bufferRead();
     void done();
     void outputPathChanged(QString path);
     void error(QString msg);
