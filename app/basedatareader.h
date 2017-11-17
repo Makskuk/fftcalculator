@@ -29,11 +29,11 @@ public slots:
     virtual void stop();
 
 protected slots:
+    qreal pcmToReal(qint16 pcm);
     void splitChannels(QByteArray &buffer);
     void onFftFinished(int workerId);
+    void onBufferRead();
     virtual void readBuffer();
-    virtual void onBufferRead();
-    qreal pcmToReal(qint16 pcm);
 
 protected:
     QString     m_outputPath;
