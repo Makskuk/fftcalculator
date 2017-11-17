@@ -12,6 +12,7 @@ public:
     ~BaseDataReader();
 
     bool init();
+    void uninit();
 
     int channelsCount()  const { return m_channelsCount; }
     int samplesCount()   const { return m_samplesCount; }

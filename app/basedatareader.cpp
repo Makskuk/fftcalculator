@@ -21,11 +21,7 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
 
 BaseDataReader::~BaseDataReader()
 {
-    // остановить воркеры
-    for (int i=0; i < m_channelsCount; i++) {
-        m_workers->at(i)->stop();
-        delete m_inputChannelVector->at(i);
-    }
+    uninit();
     delete m_inputChannelVector;
     delete m_workers;
 }
@@ -52,6 +48,16 @@ bool BaseDataReader::init()
     return true;
 }
 
+void BaseDataReader::uninit()
+{
+    for (int i=0; i < m_channelsCount; i++) {
+        if (m_workers->at(i))
+            m_workers->at(i)->stop();
+        if (m_inputChannelVector->at(i))
+            delete m_inputChannelVector->at(i);
+    }
+}
+
 void BaseDataReader::setOutputPath(QString absOutputPath)
 {
     if (absOutputPath == m_outputPath)
@@ -69,10 +75,7 @@ void BaseDataReader::start()
 
 void BaseDataReader::stop()
 {
-    for (int i=0; i < m_channelsCount; i++) {
-        m_workers->at(i)->stop();
-        delete m_inputChannelVector->at(i);
-    }
+    uninit();
     emit stopped();
 }
 
