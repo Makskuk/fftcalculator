@@ -130,14 +130,9 @@ int main(int argc, char *argv[])
         freader = new FileReader(inputFileInfo.absoluteFilePath(), &a);
         freader->setOutputPath(outputPath.absolutePath());
 
-        QObject::connect(freader, &FileReader::done, [&](bool success){
-            if (success)
-                a.exit(0);
-            else
-                a.exit(-1);
-        });
+        QObject::connect(freader, &FileReader::done, &a, &QCoreApplication::quit);
 
-        freader->readFile();
+        freader->start();
     }
     else {
         audioDevice = new AudioDevice(&a);
