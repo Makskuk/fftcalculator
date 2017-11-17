@@ -102,10 +102,10 @@ int main(int argc, char *argv[])
             break;
         case LIST:
             qDebug() << "Available audio input devices:";
-            foreach (QString device, AudioDevice::enumerateDevices()) {
+            foreach (QString device, AudioDeviceReader::enumerateDevices()) {
                 qDebug() << device;
             }
-            qDebug() << "\nDefault device: " << AudioDevice::defaultDevice();
+            qDebug() << "\nDefault device: " << AudioDeviceReader::defaultDevice();
             return 0;
         case HELP:
             printHelp(argIterator->value);
@@ -123,19 +123,19 @@ int main(int argc, char *argv[])
     qDebug() << "Save results to" << outputPath.absolutePath();
 
     FileReader*  freader;
-    AudioDevice* audioDevice;
+    AudioDeviceReader* audioDevice;
 
     // Если задан входной файл - читаем его. Иначе - пытаемся читать из микрофона
     if (!inputFileInfo.fileName().isEmpty()) {
         freader = new FileReader(inputFileInfo.absoluteFilePath(), &a);
         freader->setOutputPath(outputPath.absolutePath());
 
-        QObject::connect(freader, &FileReader::done, &a, &QCoreApplication::quit);
+        QObject::connect(freader, &FileReader::stopped, &a, &QCoreApplication::quit);
 
         freader->start();
     }
     else {
-        audioDevice = new AudioDevice(&a);
+        audioDevice = new AudioDeviceReader(&a);
 
         qDebug() << "Read from input device " << audioDevice->currentAudioDeviceInfo().deviceName();
         audioDevice->start();

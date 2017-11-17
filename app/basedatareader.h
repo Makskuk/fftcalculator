@@ -20,7 +20,8 @@ public:
 
 signals:
     void bufferRead();
-    void done();
+    void bufferProcessed();
+    void stopped();
     void outputPathChanged(QString path);
     void error(QString msg);
 
@@ -48,7 +49,7 @@ protected:
     int m_bytesPerSample;
     int m_sampleRate;
     int m_readPos;
-    bool m_lastBufferRead;
+    int m_internalBufferLength;
 };
 
 #endif // BASEDATAREADER_H

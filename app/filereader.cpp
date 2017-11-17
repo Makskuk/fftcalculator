@@ -13,9 +13,7 @@ FileReader::FileReader(QString filename, QObject *parent) : BaseDataReader(paren
 
     m_readPos = m_file->headerLength(); // отступ на длину заголовка к секции данных
 
-    connect(this, &FileReader::done, []{
-        qInfo() << "Done!";
-    });
+    connect(this, &FileReader::bufferProcessed, this, &FileReader::readBuffer);
 }
 
 void FileReader::printFileInfo()
@@ -38,6 +36,11 @@ void FileReader::start()
 
 void FileReader::readBuffer()
 {
+    if (m_file->atEnd()) {
+        stop();
+        return;
+    }
+
     qint64 readLen = m_samplesCount * m_bytesPerSample * m_channelsCount; // сколько нужно прочитать
     qint64 readEnd = m_file->size() - m_readPos; // сколько осталось непрочитано
     QByteArray rawBuffer;
@@ -52,11 +55,6 @@ void FileReader::readBuffer()
 
     // запоминаем, где остановились
     m_readPos = m_file->pos();
-
-    // если флаг еще не поставлен - проверяем, не закончились ли данные
-    if (!m_lastBufferRead) {
-        m_lastBufferRead = m_file->atEnd();
-    }
 
     emit bufferRead();
 }

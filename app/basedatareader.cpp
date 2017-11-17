@@ -10,7 +10,7 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
     m_bytesPerSample(0),
     m_sampleRate(0),
     m_readPos(0),
-    m_lastBufferRead(false)
+    m_internalBufferLength(0)
 {
     /* В дочерних классах нужно определить параметры входного сигнала
      * m_sampleRate, m_bytesPerSample, m_channelsCount.
@@ -19,12 +19,12 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
     connect(this, &BaseDataReader::bufferRead, this, &BaseDataReader::onBufferRead);
 
     // уничтожить процессы-воркеры по завершении обработки
-    connect(this, &BaseDataReader::done, [&]{
-        for (int i=0; i < m_channelsCount; i++) {
-            m_workers->at(i)->stop();
-            delete m_inputChannelVector->at(i);
-        }
-    });
+//    connect(this, &BaseDataReader::bufferProcessed, [&]{
+//        for (int i=0; i < m_channelsCount; i++) {
+//            m_workers->at(i)->stop();
+//            delete m_inputChannelVector->at(i);
+//        }
+//    });
 }
 
 BaseDataReader::~BaseDataReader()
@@ -44,6 +44,8 @@ bool BaseDataReader::init()
         emit error("Channels count not set!");
         return false;
     }
+
+    m_internalBufferLength = m_samplesCount * m_bytesPerSample * m_channelsCount;
 
     // Создаем дочерние процессы-воркеры - по одному на канал
     for (int i=0; i < m_channelsCount; i++) {
@@ -75,7 +77,11 @@ void BaseDataReader::start()
 
 void BaseDataReader::stop()
 {
-    m_lastBufferRead = true;
+    for (int i=0; i < m_channelsCount; i++) {
+        m_workers->at(i)->stop();
+        delete m_inputChannelVector->at(i);
+    }
+    emit stopped();
 }
 
 void BaseDataReader::splitChannels(QByteArray &buffer)
@@ -105,10 +111,7 @@ void BaseDataReader::onFftFinished(int workerId)
     m_finishedWorkers++;
     if (m_finishedWorkers == m_channelsCount) {
         m_finishedWorkers = 0;
-        if (!m_lastBufferRead)
-            readBuffer();
-        else
-            emit done(); // завершаем если данных больше нет
+        emit bufferProcessed(); // завершаем если данных больше нет
     }
 }
 
