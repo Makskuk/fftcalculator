@@ -24,7 +24,7 @@ static void printHelp(QString programName)
     QTextStream stdOutStream(stdout);
     stdOutStream << "Calculate FFT and write results to text file.\n"
                  << "If -i argument provided - read data from WAV file.\n"
-                 << "If -i NOT provided - read data from default audio input device. To stop reading - pyte Ctrl+c\n"
+                 << "If -i NOT provided - read data from default audio input device. To stop reading - type Ctrl+c\n"
             << "Usage: " << qPrintable(programName) << " [-i file] [-o path] [-l] \n"
             << "  -i   input WAV file\n"
             << "  -o   path to directory for output text files. One file for one input channel\n"
