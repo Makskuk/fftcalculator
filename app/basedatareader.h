@@ -37,7 +37,6 @@ protected slots:
 
 protected:
     QString     m_outputPath;
-    QIODevice*  m_dataInput;
     QVector<FftCalculator::DataVector*> *m_inputChannelVector;
     QVector<Worker*> *m_workers;
 

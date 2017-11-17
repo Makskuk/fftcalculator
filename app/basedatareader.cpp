@@ -7,17 +7,29 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
     m_finishedWorkers(0),
     m_samplesCount(Worker::samplesCount()),
     m_channelsCount(0),
+    m_bytesPerSample(0),
+    m_sampleRate(0),
+    m_readPos(0),
     m_lastBufferRead(false)
 {
     /* В дочерних классах нужно определить параметры входного сигнала
-     * m_sampleRate, m_bytesPerSample, m_channelsCount; а так же входное устройство m_dataInput.
+     * m_sampleRate, m_bytesPerSample, m_channelsCount.
      * Их нужно взять либо из заголовка WAV-файла, либо из параметров входного устройства.
      */
     connect(this, &BaseDataReader::bufferRead, this, &BaseDataReader::onBufferRead);
+
+    // уничтожить процессы-воркеры по завершении обработки
+    connect(this, &BaseDataReader::done, [&]{
+        for (int i=0; i < m_channelsCount; i++) {
+            m_workers->at(i)->stop();
+            delete m_inputChannelVector->at(i);
+        }
+    });
 }
 
 BaseDataReader::~BaseDataReader()
 {
+    // остановить воркеры
     for (int i=0; i < m_channelsCount; i++) {
         m_workers->at(i)->stop();
         delete m_inputChannelVector->at(i);
@@ -96,23 +108,7 @@ void BaseDataReader::onFftFinished(int workerId)
 
 void BaseDataReader::readBuffer()
 {
-    QByteArray rawBuffer;
-    qint64 readLen = m_samplesCount * m_bytesPerSample * m_channelsCount; // сколько нужно прочитать
-    qint64 readEnd = m_dataInput->size() - m_readPos; // сколько осталось непрочитано
-
-    readLen = qMin(readLen, readEnd);
-
-    rawBuffer.resize(readLen); // ресайзим входной буфер (на случай, если данных меньше, чем нужно)
-    m_dataInput->seek(m_readPos); // отступаем на прочитанное
-    m_dataInput->read(rawBuffer.data(), readLen);     // читаем буфер
-
-    splitChannels(rawBuffer); // раскладываем данные поканально в массивы
-
-    // если флаг еще не поставлен - проверяем, не закончились ли данные
-    if (!m_lastBufferRead) {
-        m_lastBufferRead = m_dataInput->atEnd();
-    }
-
+    // Нужно переопределить в дочернем классе
     emit bufferRead();
 }
 
@@ -123,7 +119,7 @@ void BaseDataReader::onBufferRead()
     }
 }
 
-const quint16 PCMS16MaxAmplitude =  32768; // because minimum int is -32768
+static const quint16 PCMS16MaxAmplitude =  32768; // because minimum int is -32768
 qreal BaseDataReader::pcmToReal(qint16 pcm)
 {
     return qreal(pcm) / PCMS16MaxAmplitude;
