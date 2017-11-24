@@ -92,6 +92,24 @@ bool WavFile::open(const QString &fileName)
     return QFile::open(QIODevice::ReadOnly) && readHeader();
 }
 
+bool WavFile::create(const QString &fileName, QAudioFormat &fileFormat)
+{
+    close();
+    m_fileFormat = fileFormat;
+    setFileName(fileName);
+    bool ret = QFile::open(QIODevice::WriteOnly);
+    if (ret) writeHeader();
+    return ret;
+}
+
+void WavFile::finalize()
+{
+    qint64 recordedSize = size() - m_headerLength;
+    qDebug() << "Recorded" << recordedSize << "bytes";
+    writeHeader(recordedSize);
+    close();
+}
+
 const QAudioFormat &WavFile::fileFormat() const
 {
     return m_fileFormat;
@@ -148,4 +166,47 @@ bool WavFile::readHeader()
     }
     m_headerLength = pos();
     return result;
+}
+
+/**
+ * @brief WavFile::writeHeader
+ * @param fileFormat
+ * @param dataSize - bytes of audio data (without header)
+ */
+void WavFile::writeHeader(quint32 dataSize)
+{
+    seek(0);
+    RIFFHeader riffHeader = {
+        .descriptor = {
+            .id = {'R', 'I', 'F', 'F'},
+            .size = 36 + dataSize, // must be file size (in bytes) - 8
+        },
+        .type = {'W', 'A', 'V', 'E'}
+    };
+    WAVEHeader waveHeader = {
+        .descriptor = {
+            .id = {'f', 'm', 't', ' '},
+            .size = 16, // PCM header size
+        },
+        .audioFormat = 1, // 1 = PCM, else - with compression
+        .numChannels = qToLittleEndian<quint16>(m_fileFormat.channelCount()),
+        .sampleRate = qToLittleEndian<quint32>(m_fileFormat.sampleRate()),
+        .byteRate = qToLittleEndian<quint32>(m_fileFormat.sampleRate() * m_fileFormat.channelCount() * m_fileFormat.sampleSize()/8),
+        .blockAlign = qToLittleEndian<quint16>(m_fileFormat.channelCount() * m_fileFormat.sampleSize()/8),
+        .bitsPerSample = qToLittleEndian<quint16>(m_fileFormat.sampleSize()),
+    };
+    CombinedHeader header = {
+        riffHeader,
+        waveHeader
+    };
+    DATAHeader dataHeader = {
+        .descriptor = {
+            .id = {'d', 'a', 't', 'a'},
+            .size = dataSize, // must be size of data in bytes (NumSamples * NumChannels * BitsPerSample/8)
+        }
+    };
+
+    write(reinterpret_cast<char *>(&header), sizeof(CombinedHeader));
+    write(reinterpret_cast<char *>(&dataHeader), sizeof(DATAHeader));
+    m_headerLength = pos();
 }

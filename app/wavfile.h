@@ -52,11 +52,14 @@ public:
 
     using QFile::open;
     bool open(const QString &fileName);
+    bool create(const QString &fileName, QAudioFormat &fileFormat);
+    void finalize();
     const QAudioFormat &fileFormat() const;
     qint64 headerLength() const;
 
 private:
     bool readHeader();
+    void writeHeader(quint32 dataSize = 0);
 
 private:
     QAudioFormat m_fileFormat;
