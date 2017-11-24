@@ -7,12 +7,16 @@
 #include <QAudioInput>
 #include <QIODevice>
 
-class AudioDevice : public QObject
+#include "basedatareader.h"
+#include "worker.h"
+#include "wavfile.h"
+
+class AudioDeviceReader : public BaseDataReader
 {
     Q_OBJECT
 public:
-    explicit AudioDevice(QObject *parent = 0);
-    ~AudioDevice();
+    explicit AudioDeviceReader(QObject *parent = 0);
+    ~AudioDeviceReader();
 
     QAudioDeviceInfo currentAudioDeviceInfo() const;
 
@@ -20,29 +24,32 @@ public:
     static QString     defaultDevice();
 
 signals:
+    void audioBufferReady(int size);
 
 public slots:
     void setInputDevice(QString devName);
     void setInputDevice(QAudioDeviceInfo &device);
-    void start();
-    void stop();
+    void start() override;
+    void stop() override;
 
 protected slots:
     void handleDeviceState(QAudio::State state);
     void audioDataReady();
+    void onBufferProcessed();
+    void readBuffer() override;
 
 protected:
     QAudioDeviceInfo    m_audioDevInfo;
     QAudioFormat        m_audioFormat;
     QAudioInput*        m_audioInput;
     QIODevice*          m_inputDevice;
-    qint64              m_recordPosition;
+    QByteArray*         m_audioBuffer;
 
-    QByteArray          m_buffer;
-    qint64              m_bufferPosition;
-    qint64              m_bufferLength;
-    qint64              m_dataLength;
-    bool                m_isActive;
+    WavFile*            m_wavFile;
+
+    bool    m_isActive;
+    bool    m_idBufferProcessed;
+    int     m_bufReadPos;
 };
 
 #endif // AUDIODEVICE_H

@@ -136,14 +136,12 @@ int main(int argc, char *argv[])
     }
     else {
         audioDevice = new AudioDeviceReader(&a);
+        audioDevice->setOutputPath(outputPath.absolutePath());
 
         qDebug() << "Read from input device " << audioDevice->currentAudioDeviceInfo().deviceName();
         audioDevice->start();
 
-        QTimer::singleShot(5000, &a, [&]{
-            audioDevice->stop();
-            a.quit();
-        });
+        QObject::connect(&a, &QCoreApplication::aboutToQuit, audioDevice, &AudioDeviceReader::stop);
     }
 
     return a.exec();

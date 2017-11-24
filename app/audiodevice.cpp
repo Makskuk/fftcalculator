@@ -1,26 +1,34 @@
 #include "audiodevice.h"
 #include <QDebug>
 
-AudioDevice::AudioDevice(QObject *parent) : QObject(parent),
+#include <QDateTime>
+
+AudioDeviceReader::AudioDeviceReader(QObject *parent) : BaseDataReader(parent),
     m_audioDevInfo(QAudioDeviceInfo::defaultInputDevice()),
     m_audioFormat(m_audioDevInfo.preferredFormat()),
     m_audioInput(new QAudioInput(m_audioDevInfo, m_audioFormat)),
-    m_isActive(false)
+    m_audioBuffer(new QByteArray()),
+    m_isActive(false),
+    m_idBufferProcessed(true),
+    m_bufReadPos(0)
 {
-
+    connect(this, &AudioDeviceReader::audioBufferReady, this, &AudioDeviceReader::readBuffer);
+    connect(this, &AudioDeviceReader::bufferProcessed, this, &AudioDeviceReader::onBufferProcessed);
 }
 
-AudioDevice::~AudioDevice()
+AudioDeviceReader::~AudioDeviceReader()
 {
-    stop();
+    if (m_isActive)
+        stop();
+    delete m_audioBuffer;
 }
 
-QAudioDeviceInfo AudioDevice::currentAudioDeviceInfo() const
+QAudioDeviceInfo AudioDeviceReader::currentAudioDeviceInfo() const
 {
     return m_audioDevInfo;
 }
 
-QStringList AudioDevice::enumerateDevices()
+QStringList AudioDeviceReader::enumerateDevices()
 {
     QStringList list;
     foreach (const QAudioDeviceInfo &deviceInfo, QAudioDeviceInfo::availableDevices(QAudio::AudioInput)) {
@@ -29,12 +37,12 @@ QStringList AudioDevice::enumerateDevices()
     return list;
 }
 
-QString AudioDevice::defaultDevice()
+QString AudioDeviceReader::defaultDevice()
 {
     return QAudioDeviceInfo::defaultInputDevice().deviceName();
 }
 
-void AudioDevice::setInputDevice(QString devName)
+void AudioDeviceReader::setInputDevice(QString devName)
 {
     QList<QAudioDeviceInfo> devList = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
     QList<QAudioDeviceInfo>::iterator devListIterator = devList.begin();
@@ -48,7 +56,7 @@ void AudioDevice::setInputDevice(QString devName)
     qWarning() << "Device" << devName << "not found!";
 }
 
-void AudioDevice::setInputDevice(QAudioDeviceInfo &device)
+void AudioDeviceReader::setInputDevice(QAudioDeviceInfo &device)
 {
     if (device.deviceName() == m_audioDevInfo.deviceName())
         return;
@@ -60,29 +68,50 @@ void AudioDevice::setInputDevice(QAudioDeviceInfo &device)
     m_audioFormat = device.preferredFormat();
 }
 
-void AudioDevice::start()
+void AudioDeviceReader::start()
 {
+    qDebug() << "Input format: " << m_audioFormat;
     m_audioInput = new QAudioInput(m_audioDevInfo, m_audioFormat);
-    connect(m_audioInput, &QAudioInput::stateChanged, this, &AudioDevice::handleDeviceState);
+    m_sampleRate = m_audioFormat.sampleRate();
+    m_bytesPerSample = m_audioFormat.sampleSize() / 8;
+    m_channelsCount = m_audioFormat.channelCount();
+    connect(m_audioInput, &QAudioInput::stateChanged, this, &AudioDeviceReader::handleDeviceState);
 
-    m_buffer.resize(1024);
-    m_inputDevice = m_audioInput->start();    
-    connect(m_inputDevice, &QIODevice::readyRead, this, &AudioDevice::audioDataReady);
+    QString filename = m_outputPath +
+                        "/rec_" +
+                        QDateTime::currentDateTime().toString("ddMMyyyy_HHmmss") +
+                        ".wav";
 
-    m_isActive = true;
+    m_wavFile = new WavFile(this);
+    if (m_wavFile->create(filename, m_audioFormat) == false) {
+        qWarning() << "Failed to create file" << filename;
+    } else {
+        qDebug() << "Write audio data to" << filename;
+    }
+
+    if (init()) {
+        m_audioBuffer->resize(m_internalBufferLength * 10);
+        m_inputDevice = m_audioInput->start();
+        connect(m_inputDevice, &QIODevice::readyRead, this, &AudioDeviceReader::audioDataReady);
+
+        m_isActive = true;
+    }
 }
 
-void AudioDevice::stop()
+void AudioDeviceReader::stop()
 {
+    m_wavFile->finalize();
     m_audioInput->stop();
     delete m_audioInput;
     m_audioInput = nullptr;
     m_isActive = false;
+
+    BaseDataReader::stop();
 }
 
-void AudioDevice::handleDeviceState(QAudio::State state)
+void AudioDeviceReader::handleDeviceState(QAudio::State state)
 {
-    qDebug() << "AudioDevice: New device state:" << state;
+    qDebug() << "AudioDevice: Change state to" << state;
     if (QAudio::StoppedState == state) {
         // Check error
         QAudio::Error error = m_audioInput->error();
@@ -92,23 +121,65 @@ void AudioDevice::handleDeviceState(QAudio::State state)
     }
 }
 
-void AudioDevice::audioDataReady()
+void AudioDeviceReader::audioDataReady()
 {
     const qint64 bytesReady = m_audioInput->bytesReady();
-    const qint64 bytesSpace = m_buffer.size() - m_dataLength;
+    const qint64 bytesSpace = m_audioBuffer->size() - m_readPos;
     const qint64 bytesToRead = qMin(bytesReady, bytesSpace);
+    qint64 bytesRead = 0;
 
-    const qint64 bytesRead = m_inputDevice->read(
-                                       m_buffer.data() + m_dataLength,
-                                       bytesToRead);
+//    qDebug() << "Data ready" << bytesReady
+//             << "buffer:" << m_audioBuffer->size()
+//             << "ReadPos:" << m_readPos
+//             << "to read:" << bytesToRead;
 
-    if (bytesRead) {
-        m_dataLength += bytesRead;
-        qDebug() << "Data length changed";
-//        emit dataLengthChanged(dataLength());
+    if (m_readPos < m_audioBuffer->size()) {
+        bytesRead = m_inputDevice->read(m_audioBuffer->data() + m_readPos, bytesToRead);
+//        qDebug() << "read:" << bytesRead;
     }
 
-    if (m_buffer.size() == m_dataLength)
-        qDebug() << "Stop recording!";
-//        stopRecording();
+    if (bytesRead) {
+        m_readPos += bytesRead;
+        emit audioBufferReady(m_readPos);
+    }
+}
+
+void AudioDeviceReader::onBufferProcessed()
+{
+    m_idBufferProcessed = true;
+    readBuffer(); // проверим, не пуста ли очередь
+//    qDebug() << "    ---> buffer processed";
+}
+
+void AudioDeviceReader::readBuffer()
+{
+    if (!m_idBufferProcessed) {
+        // если обработка не закончена - ждём
+//        qDebug() << "      ---> processing...";
+        return;
+    }
+
+    if (m_readPos < m_internalBufferLength) {
+        // если данных меньше, чем нужно - ждём
+//        qDebug() << "      ---> need mode data...";
+        return;
+    }
+
+    m_idBufferProcessed = false;
+
+    // возьмем данные слева из буфера
+    QByteArray rawBuffer = m_audioBuffer->left(m_internalBufferLength);
+
+    // сдвинем буфер влево
+    int bufSize = m_audioBuffer->size();
+    QByteArray tmpBuf = m_audioBuffer->right(bufSize - m_internalBufferLength);
+    tmpBuf.resize(bufSize);
+    delete m_audioBuffer;
+    m_audioBuffer = new QByteArray(tmpBuf);
+    m_readPos -= m_internalBufferLength;
+
+    m_wavFile->write(rawBuffer); // записать данные с микрофона в WAV-файл
+    splitChannels(rawBuffer); // разложим данные каналов
+    emit bufferRead();
+//    qDebug() << "    ---> buffer read";
 }
