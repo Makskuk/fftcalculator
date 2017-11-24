@@ -3,6 +3,7 @@
 #include <QDir>
 #include "filereader.h"
 #include "audiodevice.h"
+#include "unix-signal-wrapper.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -69,6 +70,10 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    UnixSignalWrapper unixSignalWrapper;
+
+    QObject::connect(&unixSignalWrapper, &UnixSignalWrapper::unixSignalReceived,
+                     &a, &QCoreApplication::quit);
 
 #ifdef Q_OS_WIN32
     setlocale(LC_ALL, ".ACP");
