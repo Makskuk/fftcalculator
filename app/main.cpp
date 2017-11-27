@@ -3,10 +3,12 @@
 #include <QDir>
 #include "filereader.h"
 #include "audiodevice.h"
+
+#ifndef Q_OS_WIN32
 #include "unix-signal-wrapper.h"
+#endif
 
 #include <QDebug>
-#include <QTimer>
 
 typedef enum _ArgType{
     INPUT_FILE,
@@ -70,13 +72,20 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    UnixSignalWrapper unixSignalWrapper;
-
-    QObject::connect(&unixSignalWrapper, &UnixSignalWrapper::unixSignalReceived,
-                     &a, &QCoreApplication::quit);
 
 #ifdef Q_OS_WIN32
+    // перехват Ctrl+c
+    signal(SIGINT, a.exit);
+    signal(SIGABRT, a.exit);
+    signal(SIGTERM, a.exit);
+
+    // установка системной локали, кодировок и тп
     setlocale(LC_ALL, ".ACP");
+#else
+    // перехват Unix-сигнала для корректного завершения
+    UnixSignalWrapper unixSignalWrapper;
+    QObject::connect(&unixSignalWrapper, &UnixSignalWrapper::unixSignalReceived,
+                     &a, &QCoreApplication::quit);
 #endif
 
     QList<Argument> arguments;

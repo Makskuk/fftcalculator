@@ -63,6 +63,7 @@ void UnixSignalWrapper::handleUnixSignal()
 
 void UnixSignalWrapper::unixSignalHandler(int sigNum)
 {
+    Q_UNUSED(sigNum)
     char a = 1;
     ::write(sigFd[0], &a, sizeof(a));
 }
