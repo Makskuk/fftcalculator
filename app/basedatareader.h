@@ -28,6 +28,7 @@ signals:
 
 public slots:
     void setOutputPath(QString absOutputPath);
+    void setOutputFileName(QString fileName);
     virtual void start();
     virtual void stop();
 
@@ -40,6 +41,7 @@ protected slots:
 
 protected:
     QString     m_outputPath;
+    QString     m_outputFileName;
     QVector<FftCalculator::DataVector*> *m_inputChannelVector;
     QVector<Worker*> *m_workers;
 

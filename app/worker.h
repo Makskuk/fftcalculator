@@ -27,6 +27,7 @@ signals:
 
 public slots:
     void setOutputDir(QString absDirPath);
+    void setOutputName(QString name);
     void setBuffer(FftCalculator::DataVector *buffer);
 
 protected slots:

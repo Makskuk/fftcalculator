@@ -2,6 +2,7 @@
 
 BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
     m_outputPath(QDir::currentPath()),
+    m_outputFileName(""),
     m_inputChannelVector(new QVector<FftCalculator::DataVector*>()),
     m_workers(new QVector<Worker*>()),
     m_finishedWorkers(0),
@@ -41,6 +42,7 @@ bool BaseDataReader::init()
 
         Worker *worker = new Worker(i);
         worker->setOutputDir(m_outputPath);
+        worker->setOutputName(m_outputFileName);
         m_workers->append(worker);
         connect(worker, &Worker::done, this, &BaseDataReader::onFftFinished);
     }
@@ -65,6 +67,11 @@ void BaseDataReader::setOutputPath(QString absOutputPath)
 
     m_outputPath = absOutputPath;
     emit outputPathChanged(m_outputPath);
+}
+
+void BaseDataReader::setOutputFileName(QString fileName)
+{
+    m_outputFileName = fileName;
 }
 
 void BaseDataReader::start()

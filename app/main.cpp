@@ -1,4 +1,5 @@
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QFileInfo>
 #include <QDir>
 #include "filereader.h"
@@ -13,6 +14,7 @@
 typedef enum _ArgType{
     INPUT_FILE,
     OUTPUT_PATH,
+    OUTPUT_PREFIX,
     LIST,
     HELP
 } ArgType;
@@ -32,6 +34,7 @@ static void printHelp(QString programName)
             << "  -i   input WAV file\n"
             << "  -o   path to directory for output text files. One file for one input channel\n"
             << "       By default - current directory\n"
+            << "  -p   prefix for output files. By default - current date and time\n"
             << "  -l   print list of available input devices\n";
 }
 
@@ -64,6 +67,11 @@ static int parseCommandLine(int argc, char *argv[], QList<Argument> &result)
             result.append(a);
             continue;
         }
+        if (arg == "-p") {
+            Argument a = {OUTPUT_PREFIX, QString(argv[++i])};
+            result.append(a);
+            continue;
+        }
     }
 
     return 0;
@@ -92,6 +100,7 @@ int main(int argc, char *argv[])
     QList<Argument>::iterator  argIterator;
     QFileInfo inputFileInfo;
     QDir outputPath;
+    QString fileName;
 
     int retval = parseCommandLine(argc, argv, arguments);
     if (retval != 0)
@@ -114,6 +123,9 @@ int main(int argc, char *argv[])
                 return -1;
             }
             break;
+        case OUTPUT_PREFIX:
+            fileName = argIterator->value;
+            break;
         case LIST:
             qDebug() << "Available audio input devices:";
             foreach (QString device, AudioDeviceReader::enumerateDevices()) {
@@ -130,8 +142,14 @@ int main(int argc, char *argv[])
         argIterator++;
     }
 
+    // Путь по умолчанию
     if (outputPath.absolutePath().isEmpty()) {
         outputPath.setPath(QDir::currentPath());
+    }
+
+    // Префикс по умолчанию
+    if (fileName.isEmpty()) {
+        fileName = QDateTime::currentDateTime().toString("ddMMyyyy_HHmmss");
     }
 
     qDebug() << "Save results to" << outputPath.absolutePath();
@@ -143,6 +161,7 @@ int main(int argc, char *argv[])
     if (!inputFileInfo.fileName().isEmpty()) {
         freader = new FileReader(inputFileInfo.absoluteFilePath(), &a);
         freader->setOutputPath(outputPath.absolutePath());
+        freader->setOutputFileName(fileName);
 
         QObject::connect(freader, &FileReader::stopped, &a, &QCoreApplication::quit);
 
@@ -151,6 +170,7 @@ int main(int argc, char *argv[])
     else {
         audioDevice = new AudioDeviceReader(&a);
         audioDevice->setOutputPath(outputPath.absolutePath());
+        audioDevice->setOutputFileName(fileName);
 
         qDebug() << "Read from input device " << audioDevice->currentAudioDeviceInfo().deviceName();
         audioDevice->start();

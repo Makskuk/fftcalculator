@@ -10,8 +10,6 @@ Worker::Worker(int num, QObject *parent) : QObject(parent),
     m_workerId(num),
     m_busy(false)
 {
-    m_outputFileName.prepend(QString::number(m_workerId) + "_");
-
     connect(m_thread, &QThread::finished, this, &QObject::deleteLater);
 
     connect(m_fftCalculator, &FftCalculator::fftReady, this, &Worker::writeResult);
@@ -53,6 +51,11 @@ void Worker::setOutputDir(QString absDirPath)
     emit outputDirChanged(absDirPath);
 }
 
+void Worker::setOutputName(QString name)
+{
+    m_outputFileName = name;
+}
+
 void Worker::setBuffer(FftCalculator::DataVector *buffer)
 {
     if (m_busy) {
@@ -78,13 +81,15 @@ void Worker::writeResult(FftCalculator::DataVector data)
 {
     QString filename_real(m_outputFileName), filename_imagine(m_outputFileName);
     if (!m_outputFile_real->isOpen()) {
-        filename_real.prepend(m_outputDir.absolutePath() + "/").append("_real.txt");
+        filename_real.prepend(m_outputDir.absolutePath() + "/")
+                .append("_"+QString::number(m_workerId)+"_real.txt");
         m_outputFile_real->setFileName(filename_real);
         qDebug("Open file %s for channel %d", qPrintable(filename_real), m_workerId);
         m_outputFile_real->open(QIODevice::WriteOnly | QIODevice::Text);
     }
     if (!m_outputFile_imagine->isOpen()) {
-        filename_imagine.prepend(m_outputDir.absolutePath() + "/").append("_imagine.txt");
+        filename_imagine.prepend(m_outputDir.absolutePath() + "/")
+                .append("_"+QString::number(m_workerId)+"_imagine.txt");
         m_outputFile_imagine->setFileName(filename_imagine);
         qDebug("Open file %s for channel %d", qPrintable(filename_imagine), m_workerId);
         m_outputFile_imagine->open(QIODevice::WriteOnly | QIODevice::Text);

@@ -1,8 +1,6 @@
 #include "audiodevice.h"
 #include <QDebug>
 
-#include <QDateTime>
-
 AudioDeviceReader::AudioDeviceReader(QObject *parent) : BaseDataReader(parent),
     m_audioDevInfo(QAudioDeviceInfo::defaultInputDevice()),
     m_audioFormat(m_audioDevInfo.preferredFormat()),
@@ -77,10 +75,7 @@ void AudioDeviceReader::start()
     m_channelsCount = m_audioFormat.channelCount();
     connect(m_audioInput, &QAudioInput::stateChanged, this, &AudioDeviceReader::handleDeviceState);
 
-    QString filename = m_outputPath +
-                        "/rec_" +
-                        QDateTime::currentDateTime().toString("ddMMyyyy_HHmmss") +
-                        ".wav";
+    QString filename = m_outputPath + "/" + m_outputFileName + "_rec.wav";
 
     m_wavFile = new WavFile(this);
     if (m_wavFile->create(filename, m_audioFormat) == false) {
