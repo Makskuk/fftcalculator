@@ -52,6 +52,7 @@ void AudioDeviceReader::setInputDevice(QString devName)
         devListIterator++;
     }
     qWarning() << "Device" << devName << "not found!";
+    emit BaseDataReader::error("Device " + devName + " not found!");
 }
 
 void AudioDeviceReader::setInputDevice(QAudioDeviceInfo &device)
@@ -89,6 +90,10 @@ void AudioDeviceReader::start()
     if (init()) {
         m_audioBuffer->resize(m_internalBufferLength * 10);
         m_inputDevice = m_audioInput->start();
+        if (!m_inputDevice) {
+            emit BaseDataReader::error("Failed to open input device!");
+            return;
+        }
         connect(m_inputDevice, &QIODevice::readyRead, this, &AudioDeviceReader::audioDataReady);
 
         m_isActive = true;
@@ -101,6 +106,7 @@ void AudioDeviceReader::stop()
     m_audioInput->stop();
     delete m_audioInput;
     m_audioInput = nullptr;
+    m_inputDevice = nullptr;
     m_isActive = false;
 
     BaseDataReader::stop();

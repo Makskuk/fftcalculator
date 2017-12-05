@@ -87,18 +87,17 @@ void MainWindow::startRecord(bool toggled)
             return;
         }
         m_fileReader = new FileReader(this);
-        m_fileReader->setInputFile(m_input);
-        m_fileReader->setOutputPath(m_outputPath);
         connect(m_fileReader, &FileReader::error, this, &MainWindow::showError);
         connect(m_fileReader, &FileReader::stopped, this, &MainWindow::stopRecord);
         connect(m_fileReader, &FileReader::stopped,
                 m_fileReader, &FileReader::deleteLater);
+        m_fileReader->setInputFile(m_input);
+        m_fileReader->setOutputPath(m_outputPath);
+        m_fileReader->setOutputFileName("b"); // ну так хотел заказчик :)
         m_fileReader->start();
     } else {
         m_input = ui->comboBoxSource->currentText();
         m_audioDeviceReader = new AudioDeviceReader(this);
-        m_audioDeviceReader->setInputDevice(m_input);
-        m_audioDeviceReader->setOutputPath(m_outputPath);
         connect(m_audioDeviceReader, &AudioDeviceReader::stopped,
                 m_audioDeviceReader, &AudioDeviceReader::deleteLater);
         connect(m_audioDeviceReader, &AudioDeviceReader::error,
@@ -107,6 +106,9 @@ void MainWindow::startRecord(bool toggled)
                 this, &MainWindow::incrementSecCounter);
         m_secondsRec = 0;
         ui->lblSecondsRecordered->setText("0");
+        m_audioDeviceReader->setInputDevice(m_input);
+        m_audioDeviceReader->setOutputPath(m_outputPath);
+        m_audioDeviceReader->setOutputFileName("b"); // ну так хотел заказчик :)
         m_audioDeviceReader->start();
     }
 
