@@ -66,6 +66,10 @@ void MainWindow::showDirDialog()
 
 void MainWindow::startRecord()
 {
+    qDebug("Start processing...");
+    m_inputFileName = ui->lineEditFileName->text();
+    m_outputPath = ui->lineEditOutPath->text();
+
 //    if (m_modeLoadFile) {
 //        if (m_inputFileName.isEmpty()) {
 //            return;
@@ -75,6 +79,7 @@ void MainWindow::startRecord()
 //        connect(m_fileReader, &FileReader::stopped, this, &MainWindow::stopRecord);
 //        m_fileReader->start();
 //    } else {
+//        m_audioDeviceReader = new AudioDeviceReader(this);
 //        m_audioDeviceReader->setOutputPath(m_outputPath);
 //        m_audioDeviceReader->start();
 //    }
@@ -85,6 +90,7 @@ void MainWindow::startRecord()
         int timeout = 1000 * ui->spinBoxTimeToRec->value();
         m_timer->setInterval(timeout);
         connect(m_timer, &QTimer::timeout, this, &MainWindow::stopRecord);
+        m_timer->start();
     }
 }
 
@@ -92,8 +98,9 @@ void MainWindow::stopRecord()
 {
     if (!ui->btnStart->isChecked()) return; // ничего не делаем, если процесс не запущен
 
+    qDebug("Stop processing...");
 //    if (m_modeLoadFile) {
-//        m_fileReader->stop();
+////        m_fileReader->stop();
 //        m_fileReader->deleteLater();
 //    } else {
 //        m_audioDeviceReader->stop();
