@@ -82,7 +82,7 @@ void MainWindow::startRecord(bool toggled)
     if (m_modeLoadFile) {
         m_input = ui->lineEditFileName->text();
         if (m_input.isEmpty()) {
-            ui->btnStart->setChecked(false);
+            enableUi();
             showError("Input file not specified!");
             return;
         }
