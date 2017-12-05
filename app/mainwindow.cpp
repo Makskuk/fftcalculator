@@ -7,15 +7,18 @@ MainWindow::MainWindow(QWidget *parent) :
     m_modeLoadFile(true),
     ui(new Ui::MainWidget),
     m_inputFileName(""),
-    m_outputPath(QDir::currentPath())
+    m_outputPath(QDir::currentPath()),
+    m_timer(new QTimer(this))
 {
     ui->setupUi(this);
+    m_timer->setSingleShot(true);
     createUi();
     connectUi();
 }
 
 MainWindow::~MainWindow()
 {
+    stopRecord();
     delete ui;
 }
 
@@ -63,22 +66,43 @@ void MainWindow::showDirDialog()
 
 void MainWindow::startRecord()
 {
-    disableUi();
-
 //    if (m_modeLoadFile) {
 //        if (m_inputFileName.isEmpty()) {
 //            return;
 //        }
 //        m_fileReader = new FileReader(m_inputFileName, this);
 //        m_fileReader->setOutputPath(m_outputPath);
-//        disableUi();
+//        connect(m_fileReader, &FileReader::stopped, this, &MainWindow::stopRecord);
+//        m_fileReader->start();
 //    } else {
-
+//        m_audioDeviceReader->setOutputPath(m_outputPath);
+//        m_audioDeviceReader->start();
 //    }
+
+    disableUi();
+
+    if (ui->checkBoxRecTimer->isChecked()) {
+        int timeout = 1000 * ui->spinBoxTimeToRec->value();
+        m_timer->setInterval(timeout);
+        connect(m_timer, &QTimer::timeout, this, &MainWindow::stopRecord);
+    }
 }
 
 void MainWindow::stopRecord()
 {
+    if (!ui->btnStart->isChecked()) return; // ничего не делаем, если процесс не запущен
+
+//    if (m_modeLoadFile) {
+//        m_fileReader->stop();
+//        m_fileReader->deleteLater();
+//    } else {
+//        m_audioDeviceReader->stop();
+//        m_audioDeviceReader->deleteLater();
+//    }
+
+    if (m_timer->isActive())
+        m_timer->stop();
+
     enableUi();
 }
 

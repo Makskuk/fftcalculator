@@ -2,6 +2,7 @@
 #define MAINWIDGET_H
 
 #include <QWidget>
+#include <QTimer>
 #include "filereader.h"
 #include "audiodevice.h"
 
@@ -40,6 +41,7 @@ private:
     Ui::MainWidget *ui;
     QString         m_inputFileName;
     QString         m_outputPath;
+    QTimer*         m_timer;
 
     FileReader          *m_fileReader;
     AudioDeviceReader   *m_audioDeviceReader;
