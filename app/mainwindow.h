@@ -36,8 +36,10 @@ private:
     void enableUi();
     void disableUi();
     void setLoadFileMode(bool isLoadFile);
+    void incrementSecCounter();
 
     bool m_modeLoadFile;
+    int  m_secondsRec;
 
     Ui::MainWidget *ui;
     QString         m_input;

@@ -9,7 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWidget),
     m_input(""),
     m_outputPath(QDir::currentPath()),
-    m_timer(new QTimer(this))
+    m_timer(new QTimer(this)),
+    m_secondsRec(0)
 {
     ui->setupUi(this);
     m_timer->setSingleShot(true);
@@ -102,6 +103,10 @@ void MainWindow::startRecord(bool toggled)
                 m_audioDeviceReader, &AudioDeviceReader::deleteLater);
         connect(m_audioDeviceReader, &AudioDeviceReader::error,
                 this, &MainWindow::showError);
+        connect(m_audioDeviceReader, &AudioDeviceReader::audioNotify,
+                this, &MainWindow::incrementSecCounter);
+        m_secondsRec = 0;
+        ui->lblSecondsRecordered->setText("0");
         m_audioDeviceReader->start();
     }
 
@@ -193,4 +198,10 @@ void MainWindow::setLoadFileMode(bool isLoadFile)
 
     m_modeLoadFile = isLoadFile;
     emit m_modeLoadFileChanged(m_modeLoadFile);
+}
+
+void MainWindow::incrementSecCounter()
+{
+    m_secondsRec++;
+    ui->lblSecondsRecordered->setText(QString::number(m_secondsRec));
 }

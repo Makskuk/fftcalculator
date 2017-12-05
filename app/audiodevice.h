@@ -25,6 +25,7 @@ public:
 
 signals:
     void audioBufferReady(int size);
+    void audioNotify();
 
 public slots:
     void setInputDevice(QString devName);

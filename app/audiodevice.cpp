@@ -70,10 +70,12 @@ void AudioDeviceReader::start()
 {
     qDebug() << "Input format: " << m_audioFormat;
     m_audioInput = new QAudioInput(m_audioDevInfo, m_audioFormat);
+    m_audioInput->setNotifyInterval(1000);
     m_sampleRate = m_audioFormat.sampleRate();
     m_bytesPerSample = m_audioFormat.sampleSize() / 8;
     m_channelsCount = m_audioFormat.channelCount();
     connect(m_audioInput, &QAudioInput::stateChanged, this, &AudioDeviceReader::handleDeviceState);
+    connect(m_audioInput, &QAudioInput::notify, this, &AudioDeviceReader::audioNotify);
 
     QString filename = m_outputPath + "/" + m_outputFileName + "_rec.wav";
 
