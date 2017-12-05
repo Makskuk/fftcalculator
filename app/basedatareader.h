@@ -53,6 +53,8 @@ protected:
     int m_sampleRate;
     int m_readPos;
     int m_internalBufferLength;
+
+    bool m_inited;
 };
 
 #endif // BASEDATAREADER_H

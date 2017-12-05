@@ -26,7 +26,7 @@ private slots:
     void onModeChanged(bool isLoadFile);
     void showFileDialog();
     void showDirDialog();
-    void startRecord();
+    void startRecord(bool toggled);
     void stopRecord();
 
 private:

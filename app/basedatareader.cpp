@@ -11,7 +11,8 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
     m_bytesPerSample(0),
     m_sampleRate(0),
     m_readPos(0),
-    m_internalBufferLength(0)
+    m_internalBufferLength(0),
+    m_inited(false)
 {
     /* В дочерних классах нужно определить параметры входного сигнала
      * m_sampleRate, m_bytesPerSample, m_channelsCount.
@@ -34,6 +35,10 @@ bool BaseDataReader::init()
         return false;
     }
 
+    if (m_inited) {
+        return true;
+    }
+
     m_internalBufferLength = m_samplesCount * m_bytesPerSample * m_channelsCount;
 
     // Создаем дочерние процессы-воркеры - по одному на канал
@@ -47,17 +52,20 @@ bool BaseDataReader::init()
         connect(worker, &Worker::done, this, &BaseDataReader::onFftFinished);
     }
 
+    m_inited = true;
     return true;
 }
 
 void BaseDataReader::uninit()
 {
+    if (!m_inited) return;
     for (int i=0; i < m_channelsCount; i++) {
         if (m_workers->at(i))
             m_workers->at(i)->stop();
         if (m_inputChannelVector->at(i))
             delete m_inputChannelVector->at(i);
     }
+    m_inited = false;
 }
 
 void BaseDataReader::setOutputPath(QString absOutputPath)
@@ -82,6 +90,8 @@ void BaseDataReader::start()
 
 void BaseDataReader::stop()
 {
+    if (!m_inited) return; // нечего останавливать
+
     uninit();
     emit stopped();
 }

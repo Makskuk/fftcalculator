@@ -64,25 +64,26 @@ void MainWindow::showDirDialog()
     }
 }
 
-void MainWindow::startRecord()
+void MainWindow::startRecord(bool toggled)
 {
+    if (!toggled) return; // при отпускании кнопки ничего не делаем
     qDebug("Start processing...");
     m_inputFileName = ui->lineEditFileName->text();
     m_outputPath = ui->lineEditOutPath->text();
 
-//    if (m_modeLoadFile) {
-//        if (m_inputFileName.isEmpty()) {
-//            return;
-//        }
-//        m_fileReader = new FileReader(m_inputFileName, this);
-//        m_fileReader->setOutputPath(m_outputPath);
-//        connect(m_fileReader, &FileReader::stopped, this, &MainWindow::stopRecord);
-//        m_fileReader->start();
-//    } else {
-//        m_audioDeviceReader = new AudioDeviceReader(this);
-//        m_audioDeviceReader->setOutputPath(m_outputPath);
-//        m_audioDeviceReader->start();
-//    }
+    if (m_modeLoadFile) {
+        if (m_inputFileName.isEmpty()) {
+            return;
+        }
+        m_fileReader = new FileReader(m_inputFileName, this);
+        m_fileReader->setOutputPath(m_outputPath);
+        connect(m_fileReader, &FileReader::stopped, this, &MainWindow::stopRecord);
+        m_fileReader->start();
+    } else {
+        m_audioDeviceReader = new AudioDeviceReader(this);
+        m_audioDeviceReader->setOutputPath(m_outputPath);
+        m_audioDeviceReader->start();
+    }
 
     disableUi();
 
@@ -99,13 +100,13 @@ void MainWindow::stopRecord()
     if (!ui->btnStart->isChecked()) return; // ничего не делаем, если процесс не запущен
 
     qDebug("Stop processing...");
-//    if (m_modeLoadFile) {
-////        m_fileReader->stop();
-//        m_fileReader->deleteLater();
-//    } else {
-//        m_audioDeviceReader->stop();
-//        m_audioDeviceReader->deleteLater();
-//    }
+    if (m_modeLoadFile) {
+        m_fileReader->stop();
+        m_fileReader->deleteLater();
+    } else {
+        m_audioDeviceReader->stop();
+        m_audioDeviceReader->deleteLater();
+    }
 
     if (m_timer->isActive())
         m_timer->stop();
@@ -128,7 +129,7 @@ void MainWindow::connectUi()
     connect(ui->btnSelectOutPath, SIGNAL(pressed()),
             this, SLOT(showDirDialog()));
     connect(ui->btnStart, SIGNAL(toggled(bool)),
-            this, SLOT(startRecord()));
+            this, SLOT(startRecord(bool)));
     connect(ui->btnStop, SIGNAL(clicked(bool)),
             this, SLOT(stopRecord()));
 
