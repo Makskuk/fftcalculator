@@ -1,11 +1,8 @@
-QT += core multimedia
-QT -= gui
+QT += widgets multimedia
 
 CONFIG += c++11
 
 TARGET = fftcalculator
-CONFIG += console
-CONFIG -= app_bundle
 
 TEMPLATE = app
 
@@ -16,7 +13,8 @@ SOURCES += main.cpp \
     worker.cpp \
     audiodevice.cpp \
     basedatareader.cpp \
-    unix-signal-wrapper.cpp
+    unix-signal-wrapper.cpp \
+    mainwindow.cpp
 
 HEADERS += \
     fftcalculator.h \
@@ -25,7 +23,8 @@ HEADERS += \
     worker.h \
     audiodevice.h \
     basedatareader.h \
-    unix-signal-wrapper.h
+    unix-signal-wrapper.h \
+    mainwindow.h
 
 win32: {
     # do not compile this files under windows
@@ -56,3 +55,6 @@ else:unix: LIBS += -L$${fftreal_dir} -lfftreal
 INCLUDEPATH += $${fftreal_dir}
 
 CONFIG += install_ok  # Do not cargo-cult this!
+
+FORMS += \
+    mainwidget.ui
