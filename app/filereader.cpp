@@ -1,19 +1,16 @@
 #include "filereader.h"
 
 #include <QDebug>
+#include <QFileInfo>
 
-FileReader::FileReader(QString filename, QObject *parent) : BaseDataReader(parent)
+FileReader::FileReader(QObject *parent) : BaseDataReader(parent)
 {
-    m_file = new WavFile(this);
-
-    m_file->open(filename);
-    m_sampleRate = m_file->fileFormat().sampleRate();
-    m_bytesPerSample = m_file->fileFormat().sampleSize() / 8;
-    m_channelsCount = m_file->fileFormat().channelCount();
-
-    m_readPos = m_file->headerLength(); // отступ на длину заголовка к секции данных
-
     connect(this, &FileReader::bufferProcessed, this, &FileReader::readBuffer);
+}
+
+void FileReader::setInputFile(QString filename)
+{
+    m_inputFile = filename;
 }
 
 void FileReader::printFileInfo()
@@ -30,6 +27,21 @@ void FileReader::printFileInfo()
 
 void FileReader::start()
 {
+    QFileInfo info(m_inputFile);
+    if (!info.exists()) {
+        emit BaseDataReader::error("Failed to open! File "+m_inputFile+" does not exist.");
+        return;
+    }
+
+    m_file = new WavFile(this);
+
+    m_file->open(m_inputFile);
+    m_sampleRate = m_file->fileFormat().sampleRate();
+    m_bytesPerSample = m_file->fileFormat().sampleSize() / 8;
+    m_channelsCount = m_file->fileFormat().channelCount();
+
+    m_readPos = m_file->headerLength(); // отступ на длину заголовка к секции данных
+
     printFileInfo();
     BaseDataReader::start();
 }

@@ -1,12 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwidget.h"
 #include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
     m_modeLoadFile(true),
     ui(new Ui::MainWidget),
-    m_inputFileName(""),
+    m_input(""),
     m_outputPath(QDir::currentPath()),
     m_timer(new QTimer(this))
 {
@@ -47,7 +48,7 @@ void MainWindow::showFileDialog()
     const QString fileName = QFileDialog::getOpenFileName(this, "Open WAV file",
                                                           m_outputPath, "*.wav");
     if (!fileName.isNull()) {
-        m_inputFileName = fileName;
+        m_input = fileName;
         ui->lineEditFileName->setText(fileName);
     }
 }
@@ -64,28 +65,45 @@ void MainWindow::showDirDialog()
     }
 }
 
+void MainWindow::showError(QString error)
+{
+    QMessageBox::warning(this, "Error", error, QMessageBox::Close);
+    stopRecord();
+}
+
 void MainWindow::startRecord(bool toggled)
 {
     if (!toggled) return; // при отпускании кнопки ничего не делаем
     qDebug("Start processing...");
-    m_inputFileName = ui->lineEditFileName->text();
+    disableUi();
     m_outputPath = ui->lineEditOutPath->text();
 
     if (m_modeLoadFile) {
-        if (m_inputFileName.isEmpty()) {
+        m_input = ui->lineEditFileName->text();
+        if (m_input.isEmpty()) {
+            ui->btnStart->setChecked(false);
+            showError("Input file not specified!");
             return;
         }
-        m_fileReader = new FileReader(m_inputFileName, this);
+        m_fileReader = new FileReader(this);
+        m_fileReader->setInputFile(m_input);
         m_fileReader->setOutputPath(m_outputPath);
+        connect(m_fileReader, &FileReader::error, this, &MainWindow::showError);
         connect(m_fileReader, &FileReader::stopped, this, &MainWindow::stopRecord);
+        connect(m_fileReader, &FileReader::stopped,
+                m_fileReader, &FileReader::deleteLater);
         m_fileReader->start();
     } else {
+        m_input = ui->comboBoxSource->currentText();
         m_audioDeviceReader = new AudioDeviceReader(this);
+        m_audioDeviceReader->setInputDevice(m_input);
         m_audioDeviceReader->setOutputPath(m_outputPath);
+        connect(m_audioDeviceReader, &AudioDeviceReader::stopped,
+                m_audioDeviceReader, &AudioDeviceReader::deleteLater);
+        connect(m_audioDeviceReader, &AudioDeviceReader::error,
+                this, &MainWindow::showError);
         m_audioDeviceReader->start();
     }
-
-    disableUi();
 
     if (ui->checkBoxRecTimer->isChecked()) {
         int timeout = 1000 * ui->spinBoxTimeToRec->value();
@@ -102,10 +120,8 @@ void MainWindow::stopRecord()
     qDebug("Stop processing...");
     if (m_modeLoadFile) {
         m_fileReader->stop();
-        m_fileReader->deleteLater();
     } else {
         m_audioDeviceReader->stop();
-        m_audioDeviceReader->deleteLater();
     }
 
     if (m_timer->isActive())
@@ -142,6 +158,7 @@ void MainWindow::connectUi()
 
 void MainWindow::enableUi()
 {
+    qDebug("enable UI...");
     ui->btnStart->setChecked(false);
     ui->btnStart->setDown(false);
     ui->comboBoxSource->setEnabled(true);
@@ -158,6 +175,7 @@ void MainWindow::enableUi()
 
 void MainWindow::disableUi()
 {
+    qDebug("Disable UI...");
     ui->btnStart->setDown(true);
     ui->comboBoxSource->setEnabled(false);
     ui->btnSelectFile->setEnabled(false);

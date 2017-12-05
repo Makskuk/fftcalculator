@@ -26,6 +26,7 @@ private slots:
     void onModeChanged(bool isLoadFile);
     void showFileDialog();
     void showDirDialog();
+    void showError(QString error);
     void startRecord(bool toggled);
     void stopRecord();
 
@@ -39,7 +40,7 @@ private:
     bool m_modeLoadFile;
 
     Ui::MainWidget *ui;
-    QString         m_inputFileName;
+    QString         m_input;
     QString         m_outputPath;
     QTimer*         m_timer;
 

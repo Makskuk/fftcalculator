@@ -17,11 +17,12 @@ class FileReader : public BaseDataReader
 {
     Q_OBJECT
 public:
-    explicit FileReader(QString filename, QObject *parent = 0);
+    explicit FileReader(QObject *parent = 0);
 
 signals:
 
 public slots:
+    void setInputFile(QString filename);
     void printFileInfo();
     void start() override;
 
@@ -30,6 +31,7 @@ protected slots:
 
 protected:
     WavFile    *m_file;
+    QString     m_inputFile;
 };
 
 #endif // FILEREADER_H

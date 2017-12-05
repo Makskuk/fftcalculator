@@ -112,6 +112,7 @@ void AudioDeviceReader::handleDeviceState(QAudio::State state)
         QAudio::Error error = m_audioInput->error();
         if (error != QAudio::NoError) {
             qWarning() << "Audio input error:" << error;
+            emit BaseDataReader::error("Audio input error");
         }
     }
 }
