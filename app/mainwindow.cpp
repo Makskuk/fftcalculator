@@ -6,11 +6,11 @@
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
     m_modeLoadFile(true),
+    m_secondsRec(0),
     ui(new Ui::MainWidget),
     m_input(""),
     m_outputPath(QDir::currentPath()),
-    m_timer(new QTimer(this)),
-    m_secondsRec(0)
+    m_timer(new QTimer(this))
 {
     ui->setupUi(this);
     m_timer->setSingleShot(true);
@@ -95,6 +95,7 @@ void MainWindow::startRecord(bool toggled)
         m_fileReader->setOutputPath(m_outputPath);
         m_fileReader->setOutputFileName("b"); // ну так хотел заказчик :)
         m_fileReader->start();
+        ui->lblChannelsCount->setText(QString::number(m_fileReader->channelsCount()));
     } else {
         m_input = ui->comboBoxSource->currentText();
         m_audioDeviceReader = new AudioDeviceReader(this);
@@ -110,6 +111,7 @@ void MainWindow::startRecord(bool toggled)
         m_audioDeviceReader->setOutputPath(m_outputPath);
         m_audioDeviceReader->setOutputFileName("b"); // ну так хотел заказчик :)
         m_audioDeviceReader->start();
+        ui->lblChannelsCount->setText(QString::number(m_audioDeviceReader->channelsCount()));
     }
 
     if (ui->checkBoxRecTimer->isChecked()) {
