@@ -119,18 +119,19 @@ void Worker::writeResult(FftCalculator::DataVector data)
 {
     qreal real, imag;
     int numSamples = FftCalculator::fftWindowLength()/2;
+    int i = 0;
     QVector<qreal> result;
 
     // Получаем из результатов БПФ значения амплитуд
-    for (int i=0; i<numSamples; ++i) {
-        real = data[i];
-        if (i == 0)
-            imag = 0.0;
-        else
-            imag = data[numSamples + i];
-
+    real = data[0];
+    imag = 0.0;
+    while (i < numSamples) {
         const qreal magnitude = qSqrt(real*real + imag*imag);
         result.append(magnitude);
+
+        i++;
+        real = data[i];
+        imag = data[numSamples + i];
     }
 
     m_bufAccumulator.append(result);
