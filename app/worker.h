@@ -9,6 +9,8 @@
 
 #include "fftcalculator.h"
 
+#define BUFFERS_COUNT   10
+
 class Worker : public QObject
 {
     Q_OBJECT
@@ -32,6 +34,7 @@ public slots:
 
 protected slots:
     void doFft();
+    void calcAvgBuffer();
     void writeResult(FftCalculator::DataVector data);
 
 protected:
@@ -42,7 +45,16 @@ protected:
     QFile *m_outputFile_imagine;
     QDir m_outputDir;
     QString m_outputFileName;
+    QVector<QVector<qreal>> m_bufAccumulator;
+
+    // результат по каждому буферу будет писаться в свой файл.
+    // Файлы именуются по шаблону: "b" + номер канала + номер усреднённого буфера
+    // номер канала - m_workerId + 1
+    // номер усреднённого буфера - m_avgBuffersCounter
+    // усреднённый буфер - среднее арифметическое блока из BUFFERS_COUNT буферов
     int m_workerId;
+    int m_avgBuffersCounter;
+
     bool m_busy;
 };
 
