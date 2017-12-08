@@ -44,11 +44,15 @@ void Worker::stop()
     m_outputFile_imagine->close();
 
     m_thread->quit();
-    m_thread->wait();
+//    m_thread->wait();
 }
 
 void Worker::setOutputDir(QString absDirPath)
 {
+    m_outputDir.setPath(absDirPath);
+    if (!m_outputDir.exists()) {
+        m_outputDir.mkpath(absDirPath);
+    }
     m_outputDir.cd(absDirPath);
     emit outputDirChanged(absDirPath);
 }
@@ -123,7 +127,8 @@ void Worker::writeResult(FftCalculator::DataVector data)
 
     // Получаем из результатов БПФ значения амплитуд
     real = data[0];
-    result.append(qSqrt(real*real)); // первая мнимая часть - ноль
+    // первая мнимая часть - ноль, sqrt(x*x + 0*0) = |x|
+    result.append(qAbs(real));
     for (int i = 1; i < numSamples; i++) {
         real = data[i];
         imag = data[numSamples + i];

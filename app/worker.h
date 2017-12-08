@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QThread>
-#include <QMutex>
 #include <QFile>
 #include <QDir>
 

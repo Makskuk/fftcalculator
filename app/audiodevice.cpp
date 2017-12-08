@@ -1,5 +1,6 @@
 #include "audiodevice.h"
 #include <QDebug>
+#include <QDir>
 
 AudioDeviceReader::AudioDeviceReader(QObject *parent) : BaseDataReader(parent),
     m_audioDevInfo(QAudioDeviceInfo::defaultInputDevice()),
@@ -79,6 +80,11 @@ void AudioDeviceReader::start()
     m_channelsCount = m_audioFormat.channelCount();
     connect(m_audioInput, &QAudioInput::stateChanged, this, &AudioDeviceReader::handleDeviceState);
     connect(m_audioInput, &QAudioInput::notify, this, &AudioDeviceReader::audioNotify);
+
+    QDir outDir(m_outputPath);
+    if (!outDir.exists()) {
+        outDir.mkpath(m_outputPath);
+    }
 
     QString filename = m_outputPath + "/" + m_outputFileName + "_rec.wav";
 
