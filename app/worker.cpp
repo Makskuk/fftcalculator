@@ -93,10 +93,8 @@ void Worker::calcAvgBuffer()
                         + QString::number(m_avgBuffersCounter+1)    // в именах файлов нумерация будет с 1
                         + ".txt";
     QFile outputFile(fileName);
-    QVector<qreal> avgBuffer;
     int count = FftCalculator::fftWindowLength()/2;
-
-    avgBuffer.resize(count);
+    QVector<qreal> avgBuffer(count, 0);
 
     // Вычисляем усреднённый буфер
     for (int i=0; i < count; i++) {
