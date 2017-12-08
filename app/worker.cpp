@@ -125,6 +125,39 @@ void Worker::writeResult(FftCalculator::DataVector data)
     int numSamples = FftCalculator::fftWindowLength()/2;
     QVector<qreal> result;
 
+    QString filename_real(m_outputFileName), filename_imagine(m_outputFileName);
+    if (!m_outputFile_real->isOpen()) {
+        filename_real.prepend(m_outputDir.absolutePath() + "/")
+                .append("_"+QString::number(m_workerId)+"_real.txt");
+        m_outputFile_real->setFileName(filename_real);
+        m_outputFile_real->open(QIODevice::WriteOnly | QIODevice::Text);
+    }
+    if (!m_outputFile_imagine->isOpen()) {
+        filename_imagine.prepend(m_outputDir.absolutePath() + "/")
+                .append("_"+QString::number(m_workerId)+"_imagine.txt");
+        m_outputFile_imagine->setFileName(filename_imagine);
+        m_outputFile_imagine->open(QIODevice::WriteOnly | QIODevice::Text);
+    }
+
+    QByteArray output_r, output_i;
+    FftCalculator::DataVector::iterator iterator_r = data.begin();
+    FftCalculator::DataVector::iterator iterator_i = data.begin();
+    output_r.append(QByteArray::number(*iterator_r).append("\r\n"));
+    output_i.append("0\r\n"); // первая мнимая часть - 0
+    iterator_r++;
+    iterator_i += numSamples+1; // мнимые части начинаются с length/2 + 1
+    int i=1;
+    while (i < numSamples) {
+        output_r.append(QByteArray::number(*iterator_r).append("\r\n"));
+        output_i.append(QByteArray::number(*iterator_i).append("\r\n"));
+        iterator_i++;
+        iterator_r++;
+        i++;
+    }
+
+    m_outputFile_real->write(output_r);
+    m_outputFile_imagine->write(output_i);
+
     // Получаем из результатов БПФ значения амплитуд
     real = data[0];
     // первая мнимая часть - ноль, sqrt(x*x + 0*0) = |x|
