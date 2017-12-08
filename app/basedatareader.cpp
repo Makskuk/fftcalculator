@@ -19,11 +19,16 @@ BaseDataReader::BaseDataReader(QObject *parent) : QObject(parent),
      * Их нужно взять либо из заголовка WAV-файла, либо из параметров входного устройства.
      */
     connect(this, &BaseDataReader::bufferRead, this, &BaseDataReader::onBufferRead);
+    m_inputChannelVector->fill(nullptr);
 }
 
 BaseDataReader::~BaseDataReader()
 {
     uninit();
+    for (int i=0; i < m_channelsCount; i++) {
+        if (m_inputChannelVector->at(i))
+            delete m_inputChannelVector->at(i);
+    }
     delete m_inputChannelVector;
     delete m_workers;
 }
@@ -41,9 +46,11 @@ bool BaseDataReader::init()
 
     m_internalBufferLength = m_samplesCount * m_bytesPerSample * m_channelsCount;
 
+    m_inputChannelVector->resize(m_channelsCount);
     // Создаем дочерние процессы-воркеры - по одному на канал
     for (int i=0; i < m_channelsCount; i++) {
-        m_inputChannelVector->append(new FftCalculator::DataVector(m_samplesCount));
+        if (m_inputChannelVector->at(i) == nullptr)
+            m_inputChannelVector->replace(i, new FftCalculator::DataVector(m_samplesCount));
 
         Worker *worker = new Worker(i);
         worker->setOutputDir(m_outputPath);
@@ -62,8 +69,8 @@ void BaseDataReader::uninit()
     for (int i=0; i < m_channelsCount; i++) {
         if (m_workers->at(i))
             m_workers->at(i)->stop();
-        if (m_inputChannelVector->at(i))
-            delete m_inputChannelVector->at(i);
+//        if (m_inputChannelVector->at(i))
+//            delete m_inputChannelVector->at(i);
     }
     m_inited = false;
 }
@@ -98,7 +105,8 @@ void BaseDataReader::stop()
 
 void BaseDataReader::splitChannels(QByteArray &buffer)
 {
-    qint16* buffer_ptr = reinterpret_cast<qint16*>(buffer.data());
+    QByteArray buf(buffer);
+    qint16* buffer_ptr = reinterpret_cast<qint16*>(buf.data());
     qreal sample;
 
     // заполняем векторы нулями (на случай, если данных меньше, чем нужно)
@@ -106,9 +114,16 @@ void BaseDataReader::splitChannels(QByteArray &buffer)
         m_inputChannelVector->at(i)->fill(0);
     }
 
+    if (buf.length()/m_bytesPerSample < (m_samplesCount * m_channelsCount)) {
+        qWarning("Not enaught data in buffer!");
+    }
     for (int i=0; i < m_samplesCount; i++) {
         for (int j=0; j < m_channelsCount; j++) {
-            sample = pcmToReal(*buffer_ptr); // масштабируем значение отсчета к диапазону [-1.0, 1.0]
+            if (m_bytesPerSample == 1) {
+                sample = pcmToReal(qint16(buf[i]));
+            } else {
+                sample = pcmToReal(*buffer_ptr); // масштабируем значение отсчета к диапазону [-1.0, 1.0]
+            }
             m_inputChannelVector->at(j)->replace(i, sample); // пишем данные в отдельный вектор для каждого канала
             buffer_ptr++;
         }
@@ -141,7 +156,7 @@ void BaseDataReader::onBufferRead()
 }
 
 static const quint16 PCMS16MaxAmplitude =  32768; // because minimum int is -32768
-qreal BaseDataReader::pcmToReal(qint16 pcm)
+qreal BaseDataReader::pcmToReal(const qint16 pcm)
 {
     return qreal(pcm) / PCMS16MaxAmplitude;
 }

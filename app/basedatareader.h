@@ -33,7 +33,7 @@ public slots:
     virtual void stop();
 
 protected slots:
-    qreal pcmToReal(qint16 pcm);
+    qreal pcmToReal(const qint16 pcm);
     void splitChannels(QByteArray &buffer);
     void onFftFinished(int workerId);
     void onBufferRead();
