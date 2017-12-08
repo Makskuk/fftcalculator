@@ -65,6 +65,8 @@ void AudioDeviceReader::setInputDevice(QAudioDeviceInfo &device)
 
     m_audioDevInfo = device;
     m_audioFormat = device.preferredFormat();
+    m_audioFormat.setChannelCount(6);
+    m_audioFormat = device.nearestFormat(m_audioFormat);
 }
 
 void AudioDeviceReader::start()
