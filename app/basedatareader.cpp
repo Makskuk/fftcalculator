@@ -108,24 +108,34 @@ void BaseDataReader::splitChannels(QByteArray &buffer)
     QByteArray buf(buffer);
     qint16* buffer_ptr = reinterpret_cast<qint16*>(buf.data());
     qreal sample;
+    int bufSamplesCount = buffer.length()/m_bytesPerSample/m_channelsCount;
 
     // заполняем векторы нулями (на случай, если данных меньше, чем нужно)
     for (int i=0; i < m_channelsCount; i++) {
         m_inputChannelVector->at(i)->fill(0);
     }
 
-    if (buf.length()/m_bytesPerSample < (m_samplesCount * m_channelsCount)) {
-        qWarning("Not enaught data in buffer!");
+    if (bufSamplesCount < m_samplesCount) {
+        qWarning("Not enaught data in buffer! Will be appended by zeros.");
     }
-    for (int i=0; i < m_samplesCount; i++) {
-        for (int j=0; j < m_channelsCount; j++) {
-            if (m_bytesPerSample == 1) {
+
+    bufSamplesCount = qMin(bufSamplesCount, m_samplesCount);
+    if (m_bytesPerSample == 1) {
+        for (int i=0; i < bufSamplesCount; i++) {
+            for (int j=0; j < m_channelsCount; j++) {
+                // масштабируем значение отсчета к диапазону [-1.0, 1.0]
                 sample = pcmToReal(qint16(buf[i]));
-            } else {
-                sample = pcmToReal(*buffer_ptr); // масштабируем значение отсчета к диапазону [-1.0, 1.0]
+                // пишем данные в отдельный вектор для каждого канала
+                m_inputChannelVector->at(j)->replace(i, sample);
             }
-            m_inputChannelVector->at(j)->replace(i, sample); // пишем данные в отдельный вектор для каждого канала
-            buffer_ptr++;
+        }
+    } else {
+        for (int i=0; i < bufSamplesCount; i++) {
+            for (int j=0; j < m_channelsCount; j++) {
+                sample = pcmToReal(*buffer_ptr); // масштабируем значение отсчета к диапазону [-1.0, 1.0]
+                m_inputChannelVector->at(j)->replace(i, sample); // пишем данные в отдельный вектор для каждого канала
+                buffer_ptr++;
+            }
         }
     }
 }

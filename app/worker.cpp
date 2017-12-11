@@ -117,6 +117,7 @@ void Worker::calcAvgBuffer()
     m_bufAccumulator.clear();
 }
 
+static int debug_i=0;
 void Worker::writeResult(FftCalculator::DataVector data)
 {
     qreal real, imag;
@@ -140,14 +141,22 @@ void Worker::writeResult(FftCalculator::DataVector data)
     QByteArray output_r, output_i;
     FftCalculator::DataVector::iterator iterator_r = data.begin();
     FftCalculator::DataVector::iterator iterator_i = data.begin();
-    output_r.append(QByteArray::number(*iterator_r).append("\r\n"));
+
+    real = *iterator_r;
+    output_r.append(QByteArray::number(real, 'f', 8).append("\r\n"));
     output_i.append("0\r\n"); // первая мнимая часть - 0
+    result.append(qAbs(real)); // первая мнимая часть - ноль, sqrt(x*x + 0*0) = |x|
     iterator_r++;
     iterator_i += numSamples+1; // мнимые части начинаются с length/2 + 1
     int i=1;
     while (i < numSamples) {
-        output_r.append(QByteArray::number(*iterator_r).append("\r\n"));
-        output_i.append(QByteArray::number(*iterator_i).append("\r\n"));
+        real = *iterator_r;
+        imag = *iterator_i;
+        // Получаем из результатов БПФ значения амплитуд
+        const qreal magnitude = qSqrt(real*real + imag*imag);
+        result.append(magnitude);
+        output_r.append(QByteArray::number(real, 'f', 8).append("\r\n"));
+        output_i.append(QByteArray::number(imag, 'f', 8).append("\r\n"));
         iterator_i++;
         iterator_r++;
         i++;
@@ -156,21 +165,22 @@ void Worker::writeResult(FftCalculator::DataVector data)
     m_outputFile_real->write(output_r);
     m_outputFile_imagine->write(output_i);
 
-    // Получаем из результатов БПФ значения амплитуд
-    real = data[0];
-    // первая мнимая часть - ноль, sqrt(x*x + 0*0) = |x|
-    result.append(qAbs(real));
-    for (int i = 1; i < numSamples; i++) {
-        real = data[i];
-        imag = data[numSamples + i];
-        const qreal magnitude = qSqrt(real*real + imag*imag);
-        result.append(magnitude);
-    }
-
     m_bufAccumulator.append(result);
     if (m_bufAccumulator.size() == BUFFERS_COUNT) {
         calcAvgBuffer();
     }
+
+    iterator_r = data.begin();
+    output_r.clear();
+    while(iterator_r != data.end()) {
+        output_r.append(QString::number(*iterator_r, 'f', 8).append("\r\n"));
+        iterator_r++;
+    }
+    QFile debug_out(m_outputDir.absolutePath() + "/" + QString::number(m_workerId)+"_debug"+QString::number(debug_i)+".txt");
+    debug_out.open(QIODevice::WriteOnly | QIODevice::Text);
+    debug_out.write(output_r);
+    debug_out.close();
+    debug_i++;
 
     m_buffer = 0;
     m_busy = false;
