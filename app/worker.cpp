@@ -117,7 +117,6 @@ void Worker::calcAvgBuffer()
     m_bufAccumulator.clear();
 }
 
-static int debug_i=0;
 void Worker::writeResult(FftCalculator::DataVector data)
 {
     qreal real, imag;
@@ -169,18 +168,6 @@ void Worker::writeResult(FftCalculator::DataVector data)
     if (m_bufAccumulator.size() == BUFFERS_COUNT) {
         calcAvgBuffer();
     }
-
-    iterator_r = data.begin();
-    output_r.clear();
-    while(iterator_r != data.end()) {
-        output_r.append(QString::number(*iterator_r, 'f', 8).append("\r\n"));
-        iterator_r++;
-    }
-    QFile debug_out(m_outputDir.absolutePath() + "/" + QString::number(m_workerId)+"_debug"+QString::number(debug_i)+".txt");
-    debug_out.open(QIODevice::WriteOnly | QIODevice::Text);
-    debug_out.write(output_r);
-    debug_out.close();
-    debug_i++;
 
     m_buffer = 0;
     m_busy = false;
