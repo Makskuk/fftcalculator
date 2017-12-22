@@ -6,6 +6,7 @@ Worker::Worker(int num, QObject *parent) : QObject(parent),
     m_fftCalculator(new FftCalculator(this)),
     m_outputFile_real(new QFile()),
     m_outputFile_imagine(new QFile()),
+    m_outputFile_amp(new QFile()),
     m_outputDir(QDir::current()),
     m_outputFileName("fft_out"),
     m_workerId(num),
@@ -29,8 +30,11 @@ Worker::~Worker()
         m_outputFile_real->close();
     if (m_outputFile_imagine->isOpen())
         m_outputFile_imagine->close();
+    if (m_outputFile_amp->isOpen())
+        m_outputFile_amp->close();
     delete m_outputFile_real;
     delete m_outputFile_imagine;
+    delete m_outputFile_amp;
 }
 
 void Worker::stop()
@@ -42,6 +46,7 @@ void Worker::stop()
 
     m_outputFile_real->close();
     m_outputFile_imagine->close();
+    m_outputFile_amp->close();
 
     m_thread->quit();
 //    m_thread->wait();
@@ -123,7 +128,8 @@ void Worker::writeResult(FftCalculator::DataVector data)
     int numSamples = FftCalculator::fftWindowLength()/2;
     QVector<qreal> result;
 
-    QString filename_real(m_outputFileName), filename_imagine(m_outputFileName);
+    QString filename_real(m_outputFileName), filename_imagine(m_outputFileName),
+            filename_amp(m_outputFileName);
     if (!m_outputFile_real->isOpen()) {
         filename_real.prepend(m_outputDir.absolutePath() + "/")
                 .append("_"+QString::number(m_workerId)+"_real.txt");
@@ -136,8 +142,14 @@ void Worker::writeResult(FftCalculator::DataVector data)
         m_outputFile_imagine->setFileName(filename_imagine);
         m_outputFile_imagine->open(QIODevice::WriteOnly | QIODevice::Text);
     }
+    if (!m_outputFile_amp->isOpen()) {
+        filename_amp.prepend(m_outputDir.absolutePath() + "/")
+                .append("_"+QString::number(m_workerId)+"_amp.txt");
+        m_outputFile_amp->setFileName(filename_amp);
+        m_outputFile_amp->open(QIODevice::WriteOnly | QIODevice::Text);
+    }
 
-    QByteArray output_r, output_i;
+    QByteArray output_r, output_i, output_amp;
     FftCalculator::DataVector::iterator iterator_r = data.begin();
     FftCalculator::DataVector::iterator iterator_i = data.begin();
 
@@ -154,6 +166,7 @@ void Worker::writeResult(FftCalculator::DataVector data)
         // Получаем из результатов БПФ значения амплитуд
         const qreal magnitude = qSqrt(real*real + imag*imag);
         result.append(magnitude);
+        output_amp.append(QByteArray::number(magnitude, 'f', 8).append("\r\n"));
         output_r.append(QByteArray::number(real, 'f', 8).append("\r\n"));
         output_i.append(QByteArray::number(imag, 'f', 8).append("\r\n"));
         iterator_i++;
@@ -163,6 +176,7 @@ void Worker::writeResult(FftCalculator::DataVector data)
 
     m_outputFile_real->write(output_r);
     m_outputFile_imagine->write(output_i);
+    m_outputFile_amp->write(output_amp);
 
     m_bufAccumulator.append(result);
     if (m_bufAccumulator.size() == BUFFERS_COUNT) {

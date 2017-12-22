@@ -42,6 +42,7 @@ protected:
     FftCalculator::DataVector *m_buffer;
     QFile *m_outputFile_real;
     QFile *m_outputFile_imagine;
+    QFile *m_outputFile_amp;
     QDir m_outputDir;
     QString m_outputFileName;
     QVector<QVector<qreal>> m_bufAccumulator;
