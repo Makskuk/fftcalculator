@@ -145,6 +145,9 @@ bool WavFile::readHeader()
                     return false;
             }
 
+            // skip additional metadata (if exists) - go to DATA header
+            seek(sizeof(RIFFHeader) + sizeof(chunk)+header.wave.descriptor.size);
+
             if (read((char*)&dataHeader, sizeof(DATAHeader)) != sizeof(DATAHeader))
                 return false;
 
