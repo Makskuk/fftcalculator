@@ -185,7 +185,9 @@ void Worker::writeResult(FftCalculator::DataVector data)
         real = *iterator_r;
         imag = *iterator_i;
         // Получаем из результатов БПФ значения амплитуд
-        const qreal magnitude = qSqrt(real*real + imag*imag);
+//        const qreal magnitude = qSqrt(real*real + imag*imag);
+
+        const qreal magnitude = real*real + imag*imag; // из последних требований - нужна только сумма квадратов
         result.append(magnitude);
         output_amp.append(QByteArray::number(magnitude, 'f', 8).append("\r\n"));
         output_r.append(QByteArray::number(real, 'f', 8).append("\r\n"));
