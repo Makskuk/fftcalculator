@@ -17,6 +17,11 @@ Worker::Worker(int num, QObject *parent) : QObject(parent),
 
     connect(m_fftCalculator, &FftCalculator::fftReady, this, &Worker::writeResult);
     connect(this, &Worker::bufferChanged, this, &Worker::doFft);
+    connect(this, &Worker::bufAccumulatorFull, this, &Worker::calcAvgBuffer);
+    connect(this, &Worker::done, [&]{
+        m_buffer = 0;
+        m_busy = false;
+    });
 
     // moveToThread() cannot be called on a QObject with a parent
     setParent(0);
@@ -90,6 +95,12 @@ void Worker::doFft()
     m_fftCalculator->doFFT(m_buffer);
 }
 
+
+/**
+ * @brief Worker::calcAvgBuffer
+ *
+ * Вычисление и запись в файл усредненных значений амплитуд.
+ */
 void Worker::calcAvgBuffer()
 {
     QString fileName = m_outputDir.absolutePath() + "/"
@@ -120,8 +131,18 @@ void Worker::calcAvgBuffer()
 
     m_avgBuffersCounter++;
     m_bufAccumulator.clear();
+
+    emit done(m_workerId);
 }
 
+/**
+ * @brief Worker::writeResult
+ * @param data - результат работы БПФ - массив комплексных чисел
+ *
+ * Открываем файлы, если они еще не открыты. Разбираем входные данные,
+ * вычисляем амплитуду, записываем результаты. Если накопилось достаточное
+ * количество буферов - вычисляем и записываем "средний буфер".
+ */
 void Worker::writeResult(FftCalculator::DataVector data)
 {
     qreal real, imag;
@@ -180,11 +201,8 @@ void Worker::writeResult(FftCalculator::DataVector data)
 
     m_bufAccumulator.append(result);
     if (m_bufAccumulator.size() == BUFFERS_COUNT) {
-        calcAvgBuffer();
+        emit bufAccumulatorFull();
+    } else {
+        emit done(m_workerId);
     }
-
-    m_buffer = 0;
-    m_busy = false;
-
-    emit done(m_workerId);
 }

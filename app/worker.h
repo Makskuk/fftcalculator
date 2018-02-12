@@ -25,6 +25,7 @@ signals:
     void done(int workerId);
     void outputDirChanged(QString path);
     void bufferChanged();
+    void bufAccumulatorFull();
 
 public slots:
     void setOutputDir(QString absDirPath);
