@@ -94,6 +94,9 @@ void MainWindow::startRecord(bool toggled)
         m_fileReader->setInputFile(m_input);
         m_fileReader->setOutputPath(m_outputPath);
         m_fileReader->setOutputFileName("b"); // ну так хотел заказчик :)
+        if (ui->checkBoxRecTimer->isChecked()) {
+            m_fileReader->setTimeToRead(1000 * ui->spinBoxTimeToRec->value());
+        }
         m_fileReader->start();
         ui->lblChannelsCount->setText(QString::number(m_fileReader->channelsCount()));
     } else {
@@ -112,13 +115,12 @@ void MainWindow::startRecord(bool toggled)
         m_audioDeviceReader->setOutputFileName("b"); // ну так хотел заказчик :)
         m_audioDeviceReader->start();
         ui->lblChannelsCount->setText(QString::number(m_audioDeviceReader->channelsCount()));
-    }
-
-    if (ui->checkBoxRecTimer->isChecked()) {
-        int timeout = 1000 * ui->spinBoxTimeToRec->value();
-        m_timer->setInterval(timeout);
-        connect(m_timer, &QTimer::timeout, this, &MainWindow::stopRecord);
-        m_timer->start();
+        if (ui->checkBoxRecTimer->isChecked()) {
+            int timeout = 1000 * ui->spinBoxTimeToRec->value();
+            m_timer->setInterval(timeout);
+            connect(m_timer, &QTimer::timeout, this, &MainWindow::stopRecord);
+            m_timer->start();
+        }
     }
 }
 

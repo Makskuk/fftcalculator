@@ -19,10 +19,14 @@ class FileReader : public BaseDataReader
 public:
     explicit FileReader(QObject *parent = 0);
 
+    int timeToRead() const;
+
 signals:
+    void timeToReadChanged(int ms);
 
 public slots:
     void setInputFile(QString filename);
+    void setTimeToRead(int ms);
     void printFileInfo();
     void start() override;
 
@@ -32,6 +36,9 @@ protected slots:
 protected:
     WavFile    *m_file;
     QString     m_inputFile;
+
+    int m_timeToRead; // milliseconds
+    int m_dataToRead;
 };
 
 #endif // FILEREADER_H

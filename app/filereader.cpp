@@ -3,9 +3,16 @@
 #include <QDebug>
 #include <QFileInfo>
 
-FileReader::FileReader(QObject *parent) : BaseDataReader(parent)
+FileReader::FileReader(QObject *parent) : BaseDataReader(parent),
+    m_timeToRead(0),
+    m_dataToRead(0)
 {
     connect(this, &FileReader::bufferProcessed, this, &FileReader::readBuffer);
+}
+
+int FileReader::timeToRead() const
+{
+    return m_timeToRead;
 }
 
 void FileReader::setInputFile(QString filename)
@@ -42,6 +49,9 @@ void FileReader::start()
 
     m_readPos = m_file->headerLength(); // отступ на длину заголовка к секции данных
 
+    // count of data in m_timeToRead ms.
+    m_dataToRead = (m_sampleRate/1000) * m_timeToRead * m_bytesPerSample * m_channelsCount + m_file->headerLength();
+
     printFileInfo();
     BaseDataReader::start();
 }
@@ -52,6 +62,13 @@ void FileReader::readBuffer()
         stop();
         return;
     }
+
+    if (m_dataToRead > m_file->headerLength() &&
+            m_readPos >= m_dataToRead) {
+        stop();
+        return;
+    }
+
 
     qint64 readLen = m_samplesCount * m_bytesPerSample * m_channelsCount; // сколько нужно прочитать
     qint64 readEnd = m_file->size() - m_readPos; // сколько осталось непрочитано
@@ -69,4 +86,13 @@ void FileReader::readBuffer()
     m_readPos = m_file->pos();
 
     emit bufferRead();
+}
+
+void FileReader::setTimeToRead(int ms)
+{
+    if (ms == m_timeToRead)
+        return;
+
+    m_timeToRead = ms;
+    emit timeToReadChanged(ms);
 }
