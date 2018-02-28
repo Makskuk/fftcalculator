@@ -123,7 +123,7 @@ void Worker::calcAvgBuffer()
     // формируем выходные строки и пишем их в файл
     QByteArray output;
     foreach (qreal value, avgBuffer) {
-        output.append(QByteArray::number(value).append("\r\n"));
+        output.append(QByteArray::number(value, 'f', 8).append("\r\n"));
     }
     outputFile.open(QIODevice::WriteOnly | QIODevice::Text);
     outputFile.write(output);
