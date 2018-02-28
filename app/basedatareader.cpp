@@ -121,6 +121,7 @@ void BaseDataReader::splitChannels(QByteArray &buffer)
     // масштабируем значение отсчета к диапазону [-1.0, 1.0] и пишем в отдельный вектор для каждого канала
 
     qint8 *ptr8 = reinterpret_cast<qint8*>(buffer.data());
+    quint8 *uptr8 = reinterpret_cast<quint8*>(buffer.data());
     qint16 *ptr16 = reinterpret_cast<qint16*>(buffer.data());
     qint32 *ptr32 = reinterpret_cast<qint32*>(buffer.data());
     qint32 psm24 = 0;
@@ -147,14 +148,10 @@ void BaseDataReader::splitChannels(QByteArray &buffer)
     case 3:
         for (int i=0; i < bufSamplesCount; i++) {
             for (int j=0; j < m_channelsCount; j++) {
-                const quint8 sgn = *(ptr8+2) & 0x80;
-                const quint8 hi  = *(ptr8+2) & 0x7f;
-                const quint8 mid = *(ptr8+1);
-                const quint8 lo  = *ptr8;
-                psm24 = 0 | (sgn << 24) | (hi << 16) | (mid << 8) | lo;
+                psm24 = 0 | (*(uptr8+2) << 24) | (*(uptr8+1) << 16) | (*uptr8 << 8);
                 sample = qreal(psm24) / max32;
                 m_inputChannelVector->at(j)->replace(i, sample);
-                ptr8 += 3;
+                uptr8 += 3;
             }
         }
         break;
