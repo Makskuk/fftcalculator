@@ -105,8 +105,6 @@ void BaseDataReader::stop()
 
 void BaseDataReader::splitChannels(QByteArray &buffer)
 {
-    QByteArray buf(buffer);
-    qint16* buffer_ptr = reinterpret_cast<qint16*>(buf.data());
     qreal sample;
     int bufSamplesCount = buffer.length()/m_bytesPerSample/m_channelsCount;
 
@@ -120,23 +118,57 @@ void BaseDataReader::splitChannels(QByteArray &buffer)
     }
 
     bufSamplesCount = qMin(bufSamplesCount, m_samplesCount);
-    if (m_bytesPerSample == 1) {
+    // масштабируем значение отсчета к диапазону [-1.0, 1.0] и пишем в отдельный вектор для каждого канала
+
+    qint8 *ptr8 = reinterpret_cast<qint8*>(buffer.data());
+    qint16 *ptr16 = reinterpret_cast<qint16*>(buffer.data());
+    qint32 *ptr32 = reinterpret_cast<qint32*>(buffer.data());
+    qint32 psm24 = 0;
+    static const quint32 max32 = 0x80000000;
+    switch(m_bytesPerSample) {
+    case 1:
         for (int i=0; i < bufSamplesCount; i++) {
             for (int j=0; j < m_channelsCount; j++) {
-                // масштабируем значение отсчета к диапазону [-1.0, 1.0]
-                sample = pcmToReal(qint16(buf[i]));
-                // пишем данные в отдельный вектор для каждого канала
+                sample = pcmToReal(qint16(*ptr8));
                 m_inputChannelVector->at(j)->replace(i, sample);
+                ptr8++;
             }
         }
-    } else {
+        break;
+    case 2:
         for (int i=0; i < bufSamplesCount; i++) {
             for (int j=0; j < m_channelsCount; j++) {
-                sample = pcmToReal(*buffer_ptr); // масштабируем значение отсчета к диапазону [-1.0, 1.0]
-                m_inputChannelVector->at(j)->replace(i, sample); // пишем данные в отдельный вектор для каждого канала
-                buffer_ptr++;
+                sample = pcmToReal(*ptr16);
+                m_inputChannelVector->at(j)->replace(i, sample);
+                ptr16++;
             }
         }
+        break;
+    case 3:
+        for (int i=0; i < bufSamplesCount; i++) {
+            for (int j=0; j < m_channelsCount; j++) {
+                const quint8 sgn = *(ptr8+2) & 0x80;
+                const quint8 hi  = *(ptr8+2) & 0x7f;
+                const quint8 mid = *(ptr8+1);
+                const quint8 lo  = *ptr8;
+                psm24 = 0 | (sgn << 24) | (hi << 16) | (mid << 8) | lo;
+                sample = qreal(psm24) / max32;
+                m_inputChannelVector->at(j)->replace(i, sample);
+                ptr8 += 3;
+            }
+        }
+        break;
+    case 4:
+        for (int i=0; i < bufSamplesCount; i++) {
+            for (int j=0; j < m_channelsCount; j++) {
+                sample = qreal(*ptr32) / max32;
+                m_inputChannelVector->at(j)->replace(i, sample);
+                ptr32++;
+            }
+        }
+        break;
+    default:
+        qWarning("Unsupported format!");
     }
 }
 
