@@ -177,7 +177,7 @@ void Worker::writeResult(FftCalculator::DataVector data)
     real = *iterator_r;
     output_r.append(QByteArray::number(real, 'f', 8).append("\r\n"));
     output_i.append("0\r\n"); // первая мнимая часть - 0
-    result.append(qAbs(real)); // первая мнимая часть - ноль, sqrt(x*x + 0*0) = |x|
+    result.append(real*real); // первая мнимая часть - ноль, sqrt(x*x + 0*0) = |x| (корень не вычисляем, поэтому x^2)
     iterator_r++;
     iterator_i += numSamples+1; // мнимые части начинаются с length/2 + 1
     int i=1;
