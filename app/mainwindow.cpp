@@ -23,7 +23,7 @@ MainWindow::~MainWindow()
     stopRecord();
     delete ui;
 }
-
+//выбор выход входного ресурса
 void MainWindow::onInputDeviceChanged(int index)
 {
     if (index == 0) {
@@ -43,7 +43,7 @@ void MainWindow::onModeChanged(bool isLoadFile)
         ui->lineEditFileName->setEnabled(false);
     }
 }
-
+//функция выбоа файла на диске
 void MainWindow::showFileDialog()
 {
     const QString fileName = QFileDialog::getOpenFileName(this, "Open WAV file",
@@ -53,7 +53,7 @@ void MainWindow::showFileDialog()
         ui->lineEditFileName->setText(fileName);
     }
 }
-
+//выбор католога для сохранения результата
 void MainWindow::showDirDialog()
 {
     const QString dir = QFileDialog::getExistingDirectory(this, "Open Output Directory",
@@ -71,7 +71,7 @@ void MainWindow::showError(QString error)
     QMessageBox::warning(this, "Error", error, QMessageBox::Close);
     stopRecord();
 }
-
+//функция кнопки start
 void MainWindow::startRecord(bool toggled)
 {
     if (!toggled) return; // при отпускании кнопки ничего не делаем
@@ -123,7 +123,7 @@ void MainWindow::startRecord(bool toggled)
         }
     }
 }
-
+//функция остановки записи или чтения файла
 void MainWindow::stopRecord()
 {
     if (!ui->btnStart->isChecked()) return; // ничего не делаем, если процесс не запущен
