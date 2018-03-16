@@ -8,6 +8,9 @@
 
 #include <QDebug>
 
+/*
+Точка входа в программу, открывает окно, запускает цикл обработки событий
+*/
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);

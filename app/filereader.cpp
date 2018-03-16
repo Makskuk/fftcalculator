@@ -31,7 +31,7 @@ void FileReader::printFileInfo()
             << "channel count:" << m_channelsCount << "\r\n"
             << "header length:" << m_file->headerLength();
 }
-
+//Открываем файл вычитываем заголовок, вычисляем размер сэмпла, объём файла, количество каналов
 void FileReader::start()
 {
     QFileInfo info(m_inputFile);
@@ -55,7 +55,7 @@ void FileReader::start()
     printFileInfo();
     BaseDataReader::start();
 }
-
+//читаем из файла порцию данных и отправляем на обработку
 void FileReader::readBuffer()
 {
     if (m_file->atEnd()) {
