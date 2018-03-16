@@ -13,7 +13,6 @@ SOURCES += main.cpp \
     worker.cpp \
     audiodevice.cpp \
     basedatareader.cpp \
-    unix-signal-wrapper.cpp \
     mainwindow.cpp
 
 HEADERS += \
@@ -23,7 +22,6 @@ HEADERS += \
     worker.h \
     audiodevice.h \
     basedatareader.h \
-    unix-signal-wrapper.h \
     mainwindow.h
 
 win32: {
