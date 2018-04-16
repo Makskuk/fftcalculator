@@ -106,8 +106,11 @@ void Worker::calcAvgBuffer()
     QString fileName = m_outputDir.absolutePath() + "/"
                         + m_outputFileName
                         + QString::number(m_workerId+1)             // в именах файлов нумерация будет с 1
-                        + QString::number(m_avgBuffersCounter+1)    // в именах файлов нумерация будет с 1
-                        + ".txt";
+                       // + QString::number(m_avgBuffersCounter+1)    // в именах файлов нумерация будет с 1
+                        + "0000.txt";
+    QString fileNumber = QString::number(m_avgBuffersCounter+1);
+    fileName = fileName.replace(fileName.length()-8 + 4-fileNumber.length(), fileNumber.length(), fileNumber);
+
     QFile outputFile(fileName);
     int count = FftCalculator::fftWindowLength()/2;
     QVector<qreal> avgBuffer(count, 0);
@@ -153,19 +156,19 @@ void Worker::writeResult(FftCalculator::DataVector data)
             filename_amp(m_outputFileName);
     if (!m_outputFile_real->isOpen()) {
         filename_real.prepend(m_outputDir.absolutePath() + "/")
-                .append("_"+QString::number(m_workerId)+"_real.txt");
+                .append("_"+QString::number(m_workerId+1)+"_real.txt");
         m_outputFile_real->setFileName(filename_real);
         m_outputFile_real->open(QIODevice::WriteOnly | QIODevice::Text);
     }
     if (!m_outputFile_imagine->isOpen()) {
         filename_imagine.prepend(m_outputDir.absolutePath() + "/")
-                .append("_"+QString::number(m_workerId)+"_imagine.txt");
+                .append("_"+QString::number(m_workerId+1)+"_imagine.txt");
         m_outputFile_imagine->setFileName(filename_imagine);
         m_outputFile_imagine->open(QIODevice::WriteOnly | QIODevice::Text);
     }
     if (!m_outputFile_amp->isOpen()) {
         filename_amp.prepend(m_outputDir.absolutePath() + "/")
-                .append("_"+QString::number(m_workerId)+"_amp.txt");
+                .append("_"+QString::number(m_workerId+1)+"_amp.txt");
         m_outputFile_amp->setFileName(filename_amp);
         m_outputFile_amp->open(QIODevice::WriteOnly | QIODevice::Text);
     }
